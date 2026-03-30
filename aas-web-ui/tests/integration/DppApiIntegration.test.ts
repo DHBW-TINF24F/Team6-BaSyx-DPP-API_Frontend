@@ -326,7 +326,7 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
 
         const result = await apiClient.readDppByProductId('battery-pack-001');
 
-        expect(fetchMock).toHaveBeenCalledWith('/api/dppsbyProductId/battery-pack-001');
+        expect(fetchMock).toHaveBeenCalledWith('/api/dppsByProductId/battery-pack-001');
         expect(result.statusCode).toBe('Success');
         expect(result.payload[0].info.idShort).toBe('TEST_AAS');
     });
@@ -355,14 +355,14 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
         const result = await apiClient.readDppVersionByProductIdAndDate('battery-pack-001', dateParam);
 
         expect(fetchMock).toHaveBeenCalledWith(
-            `/api/dppsbyProductIdAndDate/battery-pack-001?date=${encodeURIComponent(dateParam)}`
+            `/api/dppsByProductIdAndDate/battery-pack-001?date=${encodeURIComponent(dateParam)}`
         );
         expect(result.statusCode).toBe('Success');
         expect(result.payload[0].info.administration.version).toBe('2.0.0');
     });
 
     // ========== ReadDPPIdsByProductIds Tests ==========
-    it('IT-API-05: ReadDPPIdsByProductIds - should POST to /dppsbyProductIds and return identifiers', async () => {
+    it('IT-API-05: ReadDPPIdsByProductIds - should POST to /dppsByProductIds and return identifiers', async () => {
         const identifiersPayload: DppIdentifiersPayload = {
             productId: 'battery-pack-001',
             dpps: [
@@ -380,7 +380,7 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
 
         const result = await apiClient.readDppIdsByProductIds(['battery-pack-001']);
 
-        expect(fetchMock).toHaveBeenCalledWith('/api/dppsbyProductIds', {
+        expect(fetchMock).toHaveBeenCalledWith('/api/dppsByProductIds', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productIds: ['battery-pack-001'] }),
