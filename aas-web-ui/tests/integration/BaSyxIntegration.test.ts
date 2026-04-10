@@ -1,140 +1,49 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-type DppSubmodel = {
-    id: string;
-    semanticId: string;
-    data: Record<string, unknown>;
-};
+const runRealBackendTests = process.env.RUN_REAL_BACKEND_TESTS === 'true';
+const describeRealBackend = runRealBackendTests ? describe : describe.skip;
 
-type DppRecord = {
-    dppId: string;
-    productId: string;
-    submodels: DppSubmodel[];
-};
+const backendBaseUrl = (process.env.DPP_BACKEND_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const testProductId = process.env.DPP_TEST_PRODUCT_ID || '02095002010200';
 
-type AasRecord = {
-    id: string;
-    idShort: string;
-    submodels: Array<{ idShort: string; semanticId: string }>;
-};
-
-type RegistryEntry = {
-    dppId: string;
-    aasId: string;
-    endpoint: string;
-};
-
-type DiscoveryRequest = {
-    productId: string;
-};
-
-type BaSyxGateway = {
-    createAas: ReturnType<typeof vi.fn>;
-    registerAas: ReturnType<typeof vi.fn>;
-    discoverByProductId: ReturnType<typeof vi.fn>;
-};
-
-function createBaSyxGateway(): BaSyxGateway {
-    return {
-        createAas: vi.fn(),
-        registerAas: vi.fn(),
-        discoverByProductId: vi.fn(),
-    };
-}
-
-async function persistDppAsAas(gateway: BaSyxGateway, dpp: DppRecord): Promise<AasRecord> {
-    return gateway.createAas({
-        id: `aas-${dpp.dppId}`,
-        idShort: `DPP-${dpp.productId}`,
-        submodels: dpp.submodels.map((submodel) => ({
-            idShort: submodel.id,
-            semanticId: submodel.semanticId,
-        })),
-    });
-}
-
-async function registerDpp(gateway: BaSyxGateway, entry: RegistryEntry) {
-    return gateway.registerAas(entry);
-}
-
-async function discoverDpp(gateway: BaSyxGateway, request: DiscoveryRequest) {
-    return gateway.discoverByProductId(request);
-}
-
-describe('BaSyxIntegration.test.ts; Prepared orchestration tests for planned BaSyx connectivity', () => {
-    let gateway: BaSyxGateway;
-
-    beforeEach(() => {
-        gateway = createBaSyxGateway();
+async function getJson(url: string): Promise<{ response: Response; body: unknown }> {
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
     });
 
-    it('IT-BX-01: should transform DPP data into the expected AAS structure', async () => {
-        const dpp: DppRecord = {
-            dppId: 'dpp-001',
-            productId: 'battery-pack-001',
-            submodels: [
-                {
-                    id: 'digitalNameplate',
-                    semanticId: 'IDTA-02035-1',
-                    data: { manufacturerName: 'Team 6 GmbH' },
-                },
-                {
-                    id: 'productCondition',
-                    semanticId: 'IDTA-02035-5',
-                    data: { healthState: 'good' },
-                },
-            ],
-        };
+    let body: unknown = null;
+    try {
+        body = await response.json();
+    } catch {
+        body = null;
+    }
 
-        gateway.createAas.mockResolvedValue({
-            id: 'aas-dpp-001',
-            idShort: 'DPP-battery-pack-001',
-            submodels: [
-                { idShort: 'digitalNameplate', semanticId: 'IDTA-02035-1' },
-                { idShort: 'productCondition', semanticId: 'IDTA-02035-5' },
-            ],
-        } satisfies AasRecord);
+    return { response, body };
+}
 
-        const result = await persistDppAsAas(gateway, dpp);
+describeRealBackend('BaSyxIntegration.test.ts; Real backend checks for BaSyx discovery and getDPP orchestration', () => {
+    it('IT-BX-01: health endpoint should confirm backend readiness', async () => {
+        const { response, body } = await getJson(`${backendBaseUrl}/api/v1/dpp/health`);
 
-        expect(gateway.createAas).toHaveBeenCalledWith({
-            id: 'aas-dpp-001',
-            idShort: 'DPP-battery-pack-001',
-            submodels: [
-                { idShort: 'digitalNameplate', semanticId: 'IDTA-02035-1' },
-                { idShort: 'productCondition', semanticId: 'IDTA-02035-5' },
-            ],
-        });
-        expect(result.submodels).toHaveLength(2);
+        expect(response.status).toBe(200);
+        expect(body).toBeTruthy();
+        expect((body as Record<string, unknown>).status).toBe('UP');
     });
 
-    it('IT-BX-02: should prepare a registry entry for later BaSyx registration', async () => {
-        const entry: RegistryEntry = {
-            dppId: 'dpp-001',
-            aasId: 'aas-dpp-001',
-            endpoint: 'http://localhost:8081/shells/aas-dpp-001',
-        };
+    it('IT-BX-03: list endpoint should return payload object for discovery data', async () => {
+        const { response, body } = await getJson(`${backendBaseUrl}/api/v1/dpp/list?limit=5`);
 
-        gateway.registerAas.mockResolvedValue({ success: true });
-
-        const result = await registerDpp(gateway, entry);
-
-        expect(gateway.registerAas).toHaveBeenCalledWith(entry);
-        expect(result).toEqual({ success: true });
+        expect(response.status).toBe(200);
+        expect(body).toBeTruthy();
+        expect((body as Record<string, unknown>).statusCode).toBe(200);
+        expect((body as Record<string, unknown>).payload).toBeTruthy();
     });
 
-    it('IT-BX-03: should prepare discovery queries for product based lookup', async () => {
-        gateway.discoverByProductId.mockResolvedValue([
-            {
-                dppId: 'dpp-001',
-                endpoint: 'http://localhost:8081/shells/aas-dpp-001',
-            },
-        ]);
+    it('IT-BX-05: product-based getDPP endpoint should return structured response or 404', async () => {
+        const { response, body } = await getJson(`${backendBaseUrl}/dpp/${encodeURIComponent(testProductId)}`);
 
-        const result = await discoverDpp(gateway, { productId: 'battery-pack-001' });
-
-        expect(gateway.discoverByProductId).toHaveBeenCalledWith({ productId: 'battery-pack-001' });
-        expect(result).toHaveLength(1);
-        expect(result[0].dppId).toBe('dpp-001');
+        expect([200, 404]).toContain(response.status);
+        expect(body).toBeTruthy();
+        expect((body as Record<string, unknown>).statusCode).toBe(response.status);
     });
 });
