@@ -14,13 +14,18 @@
                 ></v-text-field>
             </v-col>
         </v-row>
+
         <!-- Section 1: 3 Panels nebeneinander -->
         <div class="section-title text-h5 mb-3">Kategorie 1 - Drei Panels</div>
         <v-row class="mb-6">
-            <v-col cols="4" v-for="n in 3" :key="'section1-' + n">
-                <v-card class="panel-card" elevation="2">
+            <v-col cols="4" v-for="item in section1Items" :key="item.id">
+                <v-card
+                    class="panel-card"
+                    elevation="2"
+                    @click="navigateToDpp(item.id)"
+                >
                     <v-card-title class="panel-header">
-                        Panel {{ n }}
+                        {{ item.title }}
                     </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
@@ -36,9 +41,13 @@
         <div class="section-title text-h5 mb-3">Kategorie 2 - Ein Panel</div>
         <v-row class="mb-6">
             <v-col cols="12">
-                <v-card class="panel-card" elevation="2">
+                <v-card
+                    class="panel-card"
+                    elevation="2"
+                    @click="navigateToDpp(section2Item.id)"
+                >
                     <v-card-title class="panel-header">
-                        Panel 1
+                        {{ section2Item.title }}
                     </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
@@ -53,10 +62,19 @@
         <!-- Section 3: 5 Panels -->
         <div class="section-title text-h5 mb-3">Kategorie 3 - Fünf Panels</div>
         <v-row>
-            <v-col cols="12" sm="6" md="2.4" v-for="n in 5" :key="'section3-' + n" class="panel-col-5">
-                <v-card class="panel-card" elevation="2">
+            <v-col
+                cols="12" sm="6"
+                v-for="item in section3Items"
+                :key="item.id"
+                class="panel-col-5"
+            >
+                <v-card
+                    class="panel-card"
+                    elevation="2"
+                    @click="navigateToDpp(item.id)"
+                >
                     <v-card-title class="panel-header">
-                        Panel {{ n }}
+                        {{ item.title }}
                     </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
@@ -71,7 +89,38 @@
 </template>
 
 <script lang="ts" setup>
-    // Imports und Logik hinzufügen
+import { useRouter } from 'vue-router'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface DppTile {
+    id: string
+    title: string
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+const router = useRouter()
+
+// ─── Mock-Daten (TODO: durch API-Daten ersetzen) ──────────────────────────────
+const section1Items: DppTile[] = [
+    { id: 'DPP-001', title: 'Panel 1' },
+    { id: 'DPP-002', title: 'Panel 2' },
+    { id: 'DPP-003', title: 'Panel 3' },
+]
+
+const section2Item: DppTile = { id: 'DPP-004', title: 'Panel 1' }
+
+const section3Items: DppTile[] = [
+    { id: 'DPP-005', title: 'Panel 1' },
+    { id: 'DPP-006', title: 'Panel 2' },
+    { id: 'DPP-007', title: 'Panel 3' },
+    { id: 'DPP-008', title: 'Panel 4' },
+    { id: 'DPP-009', title: 'Panel 5' },
+]
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function navigateToDpp(id: string) {
+    router.push({ name: 'DPPDetailPage', query: { id } })
+}
 </script>
 
 <style scoped>
@@ -86,6 +135,13 @@
         display: flex;
         flex-direction: column;
         background-color: rgb(var(--v-theme-card));
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .panel-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
     }
 
     .panel-header {
