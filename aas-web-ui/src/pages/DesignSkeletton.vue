@@ -119,7 +119,7 @@ const section3Items: DppTile[] = [
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function navigateToDpp(id: string) {
-    router.push({ name: 'DPPDetailPage', query: { id } })
+    router.push({ name: 'DPPDetailPage', query: { productId: id } })
 }
 </script>
 
