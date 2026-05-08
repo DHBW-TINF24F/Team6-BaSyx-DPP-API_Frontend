@@ -264,7 +264,7 @@ async function loadDpp(): Promise<void> {
     errorMessage.value = ''
 
     try {
-        const response = await fetch(`/dppsByProductId/${encodeURIComponent(currentProductId)}`)
+        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${encodeURIComponent(currentProductId)}`)
         const data = (await response.json()) as DppApiResponse
 
         // Normalize response shapes:
