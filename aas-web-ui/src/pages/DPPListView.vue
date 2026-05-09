@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-4">
 
-    <!-- Suchfeld für Filterung der AAS -->
+    <!-- Suchfeld -->
     <v-row class="mb-6" justify="center">
       <v-col cols="12" md="6">
         <v-text-field
@@ -15,32 +15,74 @@
       </v-col>
     </v-row>
 
-    <!-- Titel der Liste -->
+    <!-- Titel -->
     <div class="section-title text-h5 mb-3">
       Available AAS
     </div>
 
-    <!-- Liste der AAS -->
+    <!-- Liste -->
     <v-card elevation="2">
       <v-list lines="two">
 
-        <!-- Dynamische Liste aller AAS -->
+        <!-- Loading -->
+        <v-list-item v-if="loading">
+          <v-list-item-title>
+            Loading AAS...
+          </v-list-item-title>
+        </v-list-item>
+
+        <!-- Fehler -->
+        <v-list-item v-else-if="error">
+          <v-list-item-title class="text-error">
+            {{ error }}
+          </v-list-item-title>
+        </v-list-item>
+
+        <!-- AAS Liste -->
         <v-list-item
           v-for="aas in filteredAas"
           :key="aas.id"
-          :title="aas.name"
-          :subtitle="aas.description"
-          
-          @click="goToAas (aas.id)" class="aas-item">
-        
+          class="aas-item"
+          @click="goToAas(aas.id)"
+        >
+
           <!-- Icon links -->
           <template #prepend>
-            <v-icon color="primary">mdi-cube-outline</v-icon>
+            <v-icon color="primary">
+              mdi-cube-outline
+            </v-icon>
           </template>
+
+          <!-- Name + ID -->
+          <v-list-item-title
+            class="d-flex align-center ga-3"
+          >
+            <!-- Name -->
+            <span class="aas-name">
+              {{ aas.name }}
+            </span>
+
+            <!-- ID Pill -->
+            <v-chip
+              size="small"
+              color="primary"
+              variant="tonal"
+              pill
+            >
+              {{ aas.id }}
+            </v-chip>
+          </v-list-item-title>
+
+          <!-- Beschreibung -->
+          <v-list-item-subtitle>
+            {{ aas.description }}
+          </v-list-item-subtitle>
 
           <!-- Pfeil rechts -->
           <template #append>
-            <v-icon>mdi-chevron-right</v-icon>
+            <v-icon>
+              mdi-chevron-right
+            </v-icon>
           </template>
 
         </v-list-item>
@@ -52,33 +94,112 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { useEnvStore } from '@/store/EnvironmentStore'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-/* Router für Navigation */
+/* Router */
 const router = useRouter()
 
-/* Suchfeld */
+/* Suche */
 const search = ref('')
 
-/* Beispiel AAS Daten (später API ersetzen) */
-const aasList = ref([
-  { id: 1, name: 'AAS 1', description: 'AAS 1 Description' },
-  { id: 2, name: 'AAS 2', description: 'AAS 2 Description' },
-  { id: 3, name: 'AAS 3', description: 'AAS 3 Description' },
-])
+/* Loading + Error */
+const loading = ref(false)
+const error = ref('')
 
-/* Filterlogik für Suche */
+/* AAS Daten */
+const aasList = ref<
+  {
+    id: string
+    name: string
+    description: string
+  }[]
+>([])
+
+/* API URL */
+const API_URL = useEnvStore().getEnvAASRepoPath || 'http://localhost:8081/shells'
+
+/* Daten laden */
+async function fetchAAS() {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const response = await fetch(API_URL)
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch AAS data')
+    }
+
+    const data = await response.json()
+
+    console.log('API RESPONSE:', data)
+
+    /* Falls API result benutzt */
+    const aasArray = data.result || data
+
+    aasList.value = aasArray.map((item: any) => ({
+      id: item.id,
+
+      // Name:
+      // 1. displayName EN / EN-US
+      // 2. erstes displayName
+      // 3. idShort
+      // 4. fallback
+      name:
+        item.displayName?.find(
+          (d: any) => d.language?.startsWith('en')
+        )?.text
+        ||
+        item.displayName?.[0]?.text
+        ||
+        item.idShort
+        ||
+        'No Name',
+
+      // Description:
+      // 1. description EN
+      // 2. erste description
+      // 3. fallback
+      description:
+        item.description?.find(
+          (d: any) => d.language?.startsWith('en')
+        )?.text
+        ||
+        item.description?.[0]?.text
+        ||
+        ' ',
+    }))
+
+  } catch (err: any) {
+    error.value =
+      err.message || 'Unknown error'
+  } finally {
+    loading.value = false
+  }
+}
+
+/* Beim Laden ausführen */
+onMounted(() => {
+  fetchAAS()
+})
+
+/* Suche */
 const filteredAas = computed(() => {
-  if (!search.value) return aasList.value
+  if (!search.value) {
+    return aasList.value
+  }
 
   return aasList.value.filter(a =>
-    a.name.toLowerCase().includes(search.value.toLowerCase())
+    a.name
+      .toLowerCase()
+      .includes(search.value.toLowerCase())
   )
 })
 
-/* Navigation zur AAS Seite */
-function goToAas(id: number) {
+/* Navigation */
+function goToAas(id: string) {
   router.push(`/aas/${id}`)
 }
 </script>
@@ -92,9 +213,14 @@ function goToAas(id: number) {
 
 .aas-item {
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .aas-item:hover {
   background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+.aas-name {
+  font-weight: 600;
 }
 </style>
