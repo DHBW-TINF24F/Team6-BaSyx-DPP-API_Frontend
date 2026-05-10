@@ -1,49 +1,83 @@
 import { describe, expect, it } from 'vitest';
 
-const runRealBackendTests = process.env.RUN_REAL_BACKEND_TESTS === 'true';
-const describeRealBackend = runRealBackendTests ? describe : describe.skip;
+import {
+    buildBasyxSnapshot,
+    installIntegrationBackendMock,
+    mockDppDocument,
+    requestJson,
+    testProductId,
+    testRegistryIdentifier,
+} from './integrationHarness';
 
-const backendBaseUrl = (process.env.DPP_BACKEND_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-const testProductId = process.env.DPP_TEST_PRODUCT_ID || '02095002010200';
+installIntegrationBackendMock();
 
-async function getJson(url: string): Promise<{ response: Response; body: unknown }> {
-    const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
-    });
+describe('BaSyxIntegration.test.ts; STR-aligned BaSyx discovery and orchestration checks', () => {
+    const basyxCases = [
+        {
+            id: 'IT-BX-01',
+            description: 'Health endpoint should confirm backend readiness',
+            async run() {
+                const { response, body } = await requestJson('/api/v1/dpp/health');
 
-    let body: unknown = null;
-    try {
-        body = await response.json();
-    } catch {
-        body = null;
-    }
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).status).toBe('UP');
+            },
+        },
+        {
+            id: 'IT-BX-02',
+            description: 'List endpoint should return discovery data with the configured limit',
+            async run() {
+                const { response, body } = await requestJson('/api/v1/dpp/list?limit=5');
 
-    return { response, body };
-}
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).statusCode).toBe(200);
+                expect((body as Record<string, unknown>).payload as Array<Record<string, unknown>>).toHaveLength(5);
+            },
+        },
+        {
+            id: 'IT-BX-03',
+            description: 'Product-based getDPP endpoint should return the prepared product payload',
+            async run() {
+                const { response, body } = await requestJson(`/dpp/${encodeURIComponent(testProductId)}`);
 
-describeRealBackend('BaSyxIntegration.test.ts; Real backend checks for BaSyx discovery and getDPP orchestration', () => {
-    it('IT-BX-01: health endpoint should confirm backend readiness', async () => {
-        const { response, body } = await getJson(`${backendBaseUrl}/api/v1/dpp/health`);
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).statusCode).toBe(200);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(testProductId);
+            },
+        },
+        {
+            id: 'IT-BX-04',
+            description: 'Discovery snapshot should expose submodel references and asset data',
+            async run() {
+                const snapshot = buildBasyxSnapshot(mockDppDocument);
 
-        expect(response.status).toBe(200);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).status).toBe('UP');
-    });
+                expect(snapshot).toMatchObject({
+                    assetInformation: {
+                        assetKind: 'Instance',
+                        globalAssetId: 'urn:uuid:asset-123',
+                    },
+                    registryIdentifier: testRegistryIdentifier,
+                });
+                expect((snapshot.submodelReferences as Array<string>)).toContain('https://admin-shell.io/idta/TechnicalData/1/0');
+            },
+        },
+        {
+            id: 'IT-BX-05',
+            description: 'Registry registration should return the prepared registry identifier',
+            async run() {
+                const { response, body } = await requestJson('/registerDPP', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: testProductId }),
+                });
 
-    it('IT-BX-03: list endpoint should return payload object for discovery data', async () => {
-        const { response, body } = await getJson(`${backendBaseUrl}/api/v1/dpp/list?limit=5`);
+                expect(response.status).toBe(201);
+                expect((body as Record<string, unknown>).registryIdentifier).toBe(testRegistryIdentifier);
+            },
+        },
+    ] as const;
 
-        expect(response.status).toBe(200);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).statusCode).toBe(200);
-        expect((body as Record<string, unknown>).payload).toBeTruthy();
-    });
-
-    it('IT-BX-05: product-based getDPP endpoint should return structured response or 404', async () => {
-        const { response, body } = await getJson(`${backendBaseUrl}/dpp/${encodeURIComponent(testProductId)}`);
-
-        expect([200, 404]).toContain(response.status);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).statusCode).toBe(response.status);
+    it.each(basyxCases)('$id: $description', async ({ run }) => {
+        await run();
     });
 });

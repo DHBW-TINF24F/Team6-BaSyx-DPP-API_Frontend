@@ -1,52 +1,120 @@
 import { describe, expect, it } from 'vitest';
 
-const runRealBackendTests = process.env.RUN_REAL_BACKEND_TESTS === 'true';
-const describeRealBackend = runRealBackendTests ? describe : describe.skip;
+import {
+    buildLoadingSnapshot,
+    buildViewerSnapshot,
+    displayValue,
+    installIntegrationBackendMock,
+    mockDppDocument,
+    mockDppDocumentMissingFields,
+    requestJson,
+    resolveViewerLayout,
+    testCollectionId,
+    testDppId,
+    testElementPath,
+    testProductId,
+} from './integrationHarness';
 
-const backendBaseUrl = (process.env.DPP_BACKEND_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
-const testDppId = process.env.DPP_TEST_DPP_ID || 'urn:uuid:test-dpp-1';
-const testProductId = process.env.DPP_TEST_PRODUCT_ID || 'urn:uuid:prod-123';
+installIntegrationBackendMock();
 
-async function getJson(url: string): Promise<{ response: Response; body: unknown }> {
-    const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
-    });
+describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration checks', () => {
+    const frontendCases = [
+        {
+            id: 'IT-FB-01',
+            description: 'Viewer data load should expose the DPP header and submodels',
+            async run() {
+                const { response, body } = await requestJson(`/dpps/${encodeURIComponent(testDppId)}`);
+                expect(response.status).toBe(200);
 
-    let body: unknown = null;
-    try {
-        body = await response.json();
-    } catch {
-        body = null;
-    }
+                const payload = (body as Record<string, unknown>).payload as typeof mockDppDocument;
+                const snapshot = buildViewerSnapshot(payload, 1280);
 
-    return { response, body };
-}
+                expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+                expect(payload.productId).toBe(testProductId);
+                expect(snapshot).toMatchObject({
+                    layout: 'desktop',
+                    header: {
+                        productId: testProductId,
+                        productName: 'Industrial Motor 3000',
+                        version: '1.0.0',
+                    },
+                });
+            },
+        },
+        {
+            id: 'IT-FB-02',
+            description: 'ProductId navigation should keep the selected product context',
+            async run() {
+                const { response, body } = await requestJson(`/dppsByProductId/${encodeURIComponent(testProductId)}`);
+                expect(response.status).toBe(200);
 
-describeRealBackend('FrontendBackendIntegration.test.ts; Real backend checks for viewer-facing getDPP calls', () => {
-    it('IT-FB-01: viewer data load endpoint should return dppId and productId', async () => {
-        const { response, body } = await getJson(`${backendBaseUrl}/dpps/${encodeURIComponent(testDppId)}`);
+                const payload = (body as Record<string, unknown>).payload as Record<string, unknown>;
+                expect((body as Record<string, unknown>).productId).toBe(testProductId);
+                expect(payload.dppId).toBe(testDppId);
+                expect(resolveViewerLayout(375)).toBe('mobile');
+            },
+        },
+        {
+            id: 'IT-FB-03',
+            description: 'Missing fields should fall back to N/A in the viewer',
+            async run() {
+                const { response, body } = await requestJson('/api/v1/dpp');
+                expect(response.status).toBe(200);
 
-        expect(response.status).toBe(200);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).dppId).toBe(testDppId);
-        expect((body as Record<string, unknown>).productId).toBeTruthy();
-    });
+                const snapshot = buildViewerSnapshot(mockDppDocumentMissingFields, 1440);
+                expect(displayValue(mockDppDocumentMissingFields.info.manufacturerProductDesignation)).toBe('N/A');
+                expect(snapshot).toMatchObject({
+                    layout: 'desktop',
+                    header: {
+                        productName: 'Industrial Motor 3000',
+                    },
+                });
+                expect((body as Record<string, unknown>).statusCode).toBe(200);
+            },
+        },
+        {
+            id: 'IT-FB-04',
+            description: 'Structured error responses should surface the backend error message',
+            async run() {
+                const { response, body } = await requestJson('/dpps/urn%3Auuid%3Amissing-dpp');
 
-    it('IT-FB-02: productId-based navigation endpoint should return matching productId', async () => {
-        const { response, body } = await getJson(
-            `${backendBaseUrl}/dppsByProductId/${encodeURIComponent(testProductId)}`,
-        );
+                expect(response.status).toBe(404);
+                expect((body as Record<string, unknown>).statusCode).toBe(404);
+                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe('DPP not found');
+            },
+        },
+        {
+            id: 'IT-FB-05',
+            description: 'Responsive layout should switch between desktop and mobile snapshots',
+            async run() {
+                expect(resolveViewerLayout(1440)).toBe('desktop');
+                expect(resolveViewerLayout(375)).toBe('mobile');
+            },
+        },
+        {
+            id: 'IT-FB-06',
+            description: 'Collections and element lookups should remain addressable from the viewer',
+            async run() {
+                const collectionResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/collections/${encodeURIComponent(testCollectionId)}`);
+                const elementResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/elements/${encodeURIComponent(testElementPath)}`);
 
-        expect(response.status).toBe(200);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).productId).toBe(testProductId);
-    });
+                expect(collectionResponse.response.status).toBe(200);
+                expect(elementResponse.response.status).toBe(200);
+                expect(((collectionResponse.body as Record<string, unknown>).payload as Record<string, unknown>).items).toHaveLength(3);
+                expect(((elementResponse.body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe('Industrial Motor 3000');
+            },
+        },
+        {
+            id: 'IT-FB-07',
+            description: 'Loading state should be visible until the backend payload is ready',
+            async run() {
+                expect(buildLoadingSnapshot(true)).toMatchObject({ isLoading: true, skeletonVisible: true, contentVisible: false });
+                expect(buildLoadingSnapshot(false)).toMatchObject({ isLoading: false, skeletonVisible: false, contentVisible: true });
+            },
+        },
+    ] as const;
 
-    it('IT-FB-04: invalid query parameter should be handled with client error', async () => {
-        const { response, body } = await getJson(`${backendBaseUrl}/api/v1/dpp?id=invalid-url`);
-
-        expect(response.status).toBe(400);
-        expect(body).toBeTruthy();
-        expect((body as Record<string, unknown>).statusCode).toBe(400);
+    it.each(frontendCases)('$id: $description', async ({ run }) => {
+        await run();
     });
 });
