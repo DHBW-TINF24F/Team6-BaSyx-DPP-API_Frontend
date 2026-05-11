@@ -1,328 +1,121 @@
-import { defineComponent, h, nextTick, onMounted, ref } from 'vue';
-import { flushPromises, mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-// ========== Type Definitions based on DPP Mapping ==========
-type StatusCode = 
-    | 'Success' 
-    | 'SuccessCreated' 
-    | 'ClientErrorBadRequest'
-    | 'ClientErrorResourceNotFound';
+import {
+    buildLoadingSnapshot,
+    buildViewerSnapshot,
+    displayValue,
+    installIntegrationBackendMock,
+    mockDppDocument,
+    mockDppDocumentMissingFields,
+    requestJson,
+    resolveViewerLayout,
+    testCollectionId,
+    testDppId,
+    testElementPath,
+    testProductId,
+} from './integrationHarness';
 
-type DppInfo = {
-    modelType: 'AssetAdministrationShell';
-    assetInformation: {
-        assetKind: 'Type';
-        defaultThumbnail?: {
-            contentType: string;
-            path: string;
-        };
-        globalAssetId: string;
-    };
-    administration: {
-        version: string;
-    };
-    id: string;
-    idShort: string;
-    displayName?: Array<{
-        language: string;
-        text: string;
-    }>;
-};
+installIntegrationBackendMock();
 
-type ViewerDppPayload = {
-    info: DppInfo;
-    submodels: Record<string, Array<{
-        value: string;
-        reference: string;
-    }>>;
-};
+describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration checks', () => {
+    const frontendCases = [
+        {
+            id: 'IT-FB-01',
+            description: 'Viewer data load should expose the DPP header and submodels',
+            async run() {
+                const { response, body } = await requestJson(`/dpps/${encodeURIComponent(testDppId)}`);
+                expect(response.status).toBe(200);
 
-type ViewerDppResponse = {
-    statusCode: StatusCode;
-    payload: ViewerDppPayload[];
-};
+                const payload = (body as Record<string, unknown>).payload as typeof mockDppDocument;
+                const snapshot = buildViewerSnapshot(payload, 1280);
 
-type NameplatePayload = {
-    ManufacturerName?: Array<{ de?: string; en?: string }>;
-    ManufacturerProductDesignation?: Array<{ de?: string; en?: string }>;
-    SerialNumber?: string;
-    CompanyLogo?: {
-        contentType: string;
-        value: string;
-    };
-};
-
-type NameplateResponse = {
-    statusCode: StatusCode;
-    payload: NameplatePayload[];
-};
-
-function createJsonResponse<T>(payload: T, status = 200) {
-    return {
-        ok: status >= 200 && status < 300,
-        status,
-        json: async () => payload,
-    };
-}
-
-// ========== Vue Components ==========
-const ViewerComponent = defineComponent({
-    name: 'ViewerComponent',
-    props: {
-        dppId: {
-            type: String,
-            required: true,
+                expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+                expect(payload.productId).toBe(testProductId);
+                expect(snapshot).toMatchObject({
+                    layout: 'desktop',
+                    header: {
+                        productId: testProductId,
+                        productName: 'Industrial Motor 3000',
+                        version: '1.0.0',
+                    },
+                });
+            },
         },
-    },
-    setup(props: { dppId: string }) {
-        const dppData = ref<ViewerDppPayload | null>(null);
-        const loading = ref(true);
-        const error = ref<string | null>(null);
+        {
+            id: 'IT-FB-02',
+            description: 'ProductId navigation should keep the selected product context',
+            async run() {
+                const { response, body } = await requestJson(`/dppsByProductId/${encodeURIComponent(testProductId)}`);
+                expect(response.status).toBe(200);
 
-        onMounted(async () => {
-            try {
-                const response = await fetch(`/api/dpps/${props.dppId}`);
-                const result: ViewerDppResponse = await response.json();
-
-                if (result.statusCode === 'Success' && result.payload.length > 0) {
-                    dppData.value = result.payload[0];
-                } else if (result.statusCode === 'ClientErrorResourceNotFound') {
-                    error.value = 'DPP not found';
-                }
-                loading.value = false;
-            } catch (e) {
-                error.value = 'Failed to load DPP';
-                loading.value = false;
-            }
-        });
-
-        return () =>
-            h('section', { class: 'dpp-viewer' }, [
-                loading.value ? h('span', { class: 'loading' }, 'Loading...') : null,
-                error.value ? h('span', { class: 'error' }, error.value) : null,
-                dppData.value
-                    ? h('div', [
-                          h('span', { class: 'product-id' }, dppData.value.info.idShort),
-                          h('span', { class: 'submodel-count' }, String(Object.keys(dppData.value.submodels).length)),
-                          h('span', { class: 'global-asset-id' }, dppData.value.info.assetInformation.globalAssetId),
-                      ])
-                    : null,
-            ]);
-    },
-});
-
-const NavigationComponent = defineComponent({
-    name: 'NavigationComponent',
-    setup() {
-        const data = ref<NameplatePayload | null>(null);
-        const loading = ref(false);
-
-        async function loadSubmodel(submodelId: string) {
-            loading.value = true;
-            try {
-                const response = await fetch(`/api/dpps/dpp-001/collections/${submodelId}`);
-                const result: NameplateResponse = await response.json();
-
-                if (result.statusCode === 'Success' && result.payload.length > 0) {
-                    data.value = result.payload[0];
-                }
-            } finally {
-                loading.value = false;
-            }
-        }
-
-        return () =>
-            h('div', [
-                h(
-                    'button',
-                    {
-                        class: 'nav-btn',
-                        onClick: () => loadSubmodel('Nameplate'),
-                    },
-                    'Digital Nameplate',
-                ),
-                loading.value ? h('span', { class: 'loading' }, 'Loading...') : null,
-                data.value
-                    ? h('div', [
-                          h(
-                              'div',
-                              { class: 'manufacturer' },
-                              data.value.ManufacturerName?.[0]?.de ?? data.value.ManufacturerName?.[0]?.en ?? 'n/a'
-                          ),
-                          h('div', { class: 'serial' }, data.value.SerialNumber ?? 'n/a'),
-                      ])
-                    : null,
-            ]);
-    },
-});
-
-const MissingDataComponent = defineComponent({
-    name: 'MissingDataComponent',
-    setup() {
-        const data = ref<NameplatePayload>({});
-
-        onMounted(async () => {
-            try {
-                const response = await fetch('/api/dpps/dpp-001/collections/Nameplate');
-                const result: NameplateResponse = await response.json();
-
-                if (result.statusCode === 'Success' && result.payload.length > 0) {
-                    data.value = result.payload[0];
-                }
-            } catch (e) {
-                // Handle error silently
-            }
-        });
-
-        return () =>
-            h('div', [
-                h(
-                    'span',
-                    { class: 'manufacturer' },
-                    data.value.ManufacturerName?.[0]?.de ?? data.value.ManufacturerName?.[0]?.en ?? 'N/A'
-                ),
-                h('span', { class: 'product-designation' }, data.value.ManufacturerProductDesignation?.[0]?.de ?? 'N/A'),
-                !data.value.ManufacturerProductDesignation
-                    ? h('span', { class: 'missing-data' }, 'Product designation missing')
-                    : null,
-            ]);
-    },
-});
-
-const ResponsiveComponent = defineComponent({
-    name: 'ResponsiveComponent',
-    setup() {
-        const isMobile = ref(window.innerWidth < 768);
-
-        return () => h('div', { class: isMobile.value ? 'mobile-layout' : 'desktop-layout' }, 'content');
-    },
-});
-
-// ========== Test Suite ==========
-describe('FrontendBackendIntegration.test.ts; Integration tests for viewer components and API per DIN EN 18222', () => {
-    const fetchMock = vi.fn();
-
-    beforeEach(() => {
-        fetchMock.mockReset();
-        vi.stubGlobal('fetch', fetchMock);
-    });
-
-    it('IT-FB-01: should load DPP viewer with status code and payload structure on mount', async () => {
-        const dppPayload: ViewerDppPayload = {
-            info: {
-                modelType: 'AssetAdministrationShell',
-                assetInformation: {
-                    assetKind: 'Type',
-                    globalAssetId: 'https://pk.harting.com/test',
-                },
-                administration: { version: '1.0.1' },
-                id: 'https://dpp40.harting.com/shells/test',
-                idShort: 'TEST_AAS',
-                displayName: [{ language: 'en', text: 'Test AAS' }],
+                const payload = (body as Record<string, unknown>).payload as Record<string, unknown>;
+                expect((body as Record<string, unknown>).productId).toBe(testProductId);
+                expect(payload.dppId).toBe(testDppId);
+                expect(resolveViewerLayout(375)).toBe('mobile');
             },
-            submodels: {
-                Nameplate: [
-                    {
-                        value: 'https://example.com/submodels/nameplate',
-                        reference: 'https://admin-shell.io/zvei/nameplate/3/0/Nameplate',
+        },
+        {
+            id: 'IT-FB-03',
+            description: 'Missing fields should fall back to N/A in the viewer',
+            async run() {
+                const { response, body } = await requestJson('/api/v1/dpp');
+                expect(response.status).toBe(200);
+
+                const snapshot = buildViewerSnapshot(mockDppDocumentMissingFields, 1440);
+                expect(displayValue(mockDppDocumentMissingFields.info.manufacturerProductDesignation)).toBe('N/A');
+                expect(snapshot).toMatchObject({
+                    layout: 'desktop',
+                    header: {
+                        productName: 'Industrial Motor 3000',
                     },
-                ],
-                TechnicalData: [
-                    {
-                        value: 'https://example.com/submodels/techdata',
-                        reference: 'https://admin-shell.io/techdata/1/0/TechnicalData',
-                    },
-                ],
+                });
+                expect((body as Record<string, unknown>).statusCode).toBe(200);
             },
-        };
+        },
+        {
+            id: 'IT-FB-04',
+            description: 'Structured error responses should surface the backend error message',
+            async run() {
+                const { response, body } = await requestJson('/dpps/urn%3Auuid%3Amissing-dpp');
 
-        const response: ViewerDppResponse = {
-            statusCode: 'Success',
-            payload: [dppPayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const wrapper = mount(ViewerComponent, { props: { dppId: 'dpp-001' } });
-        await flushPromises();
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001');
-        expect(wrapper.find('.product-id').text()).toBe('TEST_AAS');
-        expect(wrapper.find('.submodel-count').text()).toBe('2');
-        expect(wrapper.find('.global-asset-id').text()).toBe('https://pk.harting.com/test');
-    });
-
-    it('IT-FB-02: should request data element collection when navigation is used', async () => {
-        const nameplatPayload: NameplatePayload = {
-            ManufacturerName: [{ de: 'HARTING Electric Stiftung & Co. KG' }],
-            ManufacturerProductDesignation: [{ de: 'Han 24B Assembly', en: 'Han 24B Assembly' }],
-            SerialNumber: 'SN-0001',
-            CompanyLogo: {
-                contentType: 'image/png',
-                value: 'aH0cHM6Ly9leGFtcGxlLmNvbS9sb2dvLnBuZw==',
+                expect(response.status).toBe(404);
+                expect((body as Record<string, unknown>).statusCode).toBe(404);
+                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe('DPP not found');
             },
-        };
+        },
+        {
+            id: 'IT-FB-05',
+            description: 'Responsive layout should switch between desktop and mobile snapshots',
+            async run() {
+                expect(resolveViewerLayout(1440)).toBe('desktop');
+                expect(resolveViewerLayout(375)).toBe('mobile');
+            },
+        },
+        {
+            id: 'IT-FB-06',
+            description: 'Collections and element lookups should remain addressable from the viewer',
+            async run() {
+                const collectionResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/collections/${encodeURIComponent(testCollectionId)}`);
+                const elementResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/elements/${encodeURIComponent(testElementPath)}`);
 
-        const response: NameplateResponse = {
-            statusCode: 'Success',
-            payload: [nameplatPayload],
-        };
+                expect(collectionResponse.response.status).toBe(200);
+                expect(elementResponse.response.status).toBe(200);
+                expect(((collectionResponse.body as Record<string, unknown>).payload as Record<string, unknown>).items).toHaveLength(3);
+                expect(((elementResponse.body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe('Industrial Motor 3000');
+            },
+        },
+        {
+            id: 'IT-FB-07',
+            description: 'Loading state should be visible until the backend payload is ready',
+            async run() {
+                expect(buildLoadingSnapshot(true)).toMatchObject({ isLoading: true, skeletonVisible: true, contentVisible: false });
+                expect(buildLoadingSnapshot(false)).toMatchObject({ isLoading: false, skeletonVisible: false, contentVisible: true });
+            },
+        },
+    ] as const;
 
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const wrapper = mount(NavigationComponent);
-        await wrapper.find('.nav-btn').trigger('click');
-        await nextTick();
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001/collections/Nameplate');
-        expect(wrapper.find('.manufacturer').text()).toBe('HARTING Electric Stiftung & Co. KG');
-        expect(wrapper.find('.serial').text()).toBe('SN-0001');
-    });
-
-    it('IT-FB-03: should render placeholders when optional data fields are missing', async () => {
-        const nameplatPayload: NameplatePayload = {
-            ManufacturerName: [{ de: 'HARTING Electric Stiftung & Co. KG' }],
-        };
-
-        const response: NameplateResponse = {
-            statusCode: 'Success',
-            payload: [nameplatPayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const wrapper = mount(MissingDataComponent);
-        await flushPromises();
-
-        expect(wrapper.find('.manufacturer').text()).toBe('HARTING Electric Stiftung & Co. KG');
-        expect(wrapper.find('.product-designation').text()).toBe('N/A');
-        expect(wrapper.find('.missing-data').exists()).toBe(true);
-    });
-
-    it('IT-FB-04: should handle error responses from API', async () => {
-        const errorResponse: Omit<ViewerDppResponse, 'payload'> & { message?: string } = {
-            statusCode: 'ClientErrorResourceNotFound',
-            message: 'DPP not found',
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(errorResponse, 404));
-
-        const wrapper = mount(ViewerComponent, { props: { dppId: 'non-existent' } });
-        await flushPromises();
-
-        expect(wrapper.find('.error').text()).toBe('DPP not found');
-    });
-
-    it('IT-FB-05: should switch to mobile layout below the breakpoint', () => {
-        Object.defineProperty(window, 'innerWidth', {
-            configurable: true,
-            value: 600,
-        });
-
-        const wrapper = mount(ResponsiveComponent);
-
-        expect(wrapper.classes()).toContain('mobile-layout');
+    it.each(frontendCases)('$id: $description', async ({ run }) => {
+        await run();
     });
 
     it('IT-FB-06: should handle ClientErrorBadRequest for invalid requests', async () => {
