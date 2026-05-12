@@ -11,7 +11,6 @@ import AASEditor from '@/pages/AASEditor.vue';
 import AASSubmodelViewer from '@/pages/AASSubmodelViewer.vue';
 import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
-import DPPEditor from '@/pages/DPPEditor.vue';
 import DPPListView from '@/pages/DPPListView.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
@@ -120,12 +119,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
         name: 'DPPList',
         component: DPPListView,
         meta: { name: 'DPP List', subtitle: 'All Digital Product Passports' },
-    },
-    {
-        path: '/dpp/detail/edit/:productId?',
-        name: 'DPPEditor',
-        component: DPPEditor,
-        meta: { name: 'DPP Editor', subtitle: 'Edit Digital Product Passport' },
     },
     {
         path: '/dpp/detail/:productId?',
