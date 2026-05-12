@@ -198,9 +198,10 @@ const filteredAas = computed(() => {
   )
 })
 
+/* Navigation zur passenden DPP Detailseite */
 /* Navigation */
 function goToAas(id: string) {
-  router.push(`/aas/${id}`)
+  router.push(`/dpp/detail/${id}`)
 }
 </script>
 

@@ -74,7 +74,7 @@ const staticRoutes: Array<RouteRecordRaw> = [
         meta: { name: 'Design Skeletton', subtitle: 'Design Testing Page' },
     },
     {
-        path: '/dpplist',
+        path: '/dpp/list',
         name: 'DPPListView',
         component: DPPListView,
         meta: { name: 'DPP List', subtitle: 'List of DPPs' },
