@@ -12,13 +12,12 @@ import AASSubmodelViewer from '@/pages/AASSubmodelViewer.vue';
 import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
 import DPPEditor from '@/pages/DPPEditor.vue';
-import DPPList from '@/pages/DPPList.vue';
+import DPPListView from '@/pages/DPPListView.vue';
 import DPPViewer from '@/pages/DPPViewer.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
 import DesignSkeletton from '@/pages/DesignSkeletton.vue';
-import DPPListView from './pages/DPPListView.vue';  
 import { useAASStore } from '@/store/AASDataStore';
 import { useEnvStore } from '@/store/EnvironmentStore';
 import { useInfrastructureStore } from '@/store/InfrastructureStore';
@@ -125,17 +124,17 @@ const staticRoutes: Array<RouteRecordRaw> = [
     {
         path: '/dpp/list',
         name: 'DPPList',
-        component: DPPList,
+        component: DPPListView,
         meta: { name: 'DPP List', subtitle: 'All Digital Product Passports' },
     },
     {
-        path: '/dpp/details/edit/:productId?',
+        path: '/dpp/detail/edit/:productId?',
         name: 'DPPEditor',
         component: DPPEditor,
         meta: { name: 'DPP Editor', subtitle: 'Edit Digital Product Passport' },
     },
     {
-        path: '/dpp/details/:productId?',
+        path: '/dpp/detail/:productId?',
         name: 'DPPViewer',
         component: DPPViewer,
         meta: { name: 'DPP Viewer', subtitle: 'View Digital Product Passport' },

@@ -141,7 +141,7 @@
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/details') && !isActiveRoutePath('/dpp/details/edit')"
+                            :border="isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')"
                             subtitle="View Digital Product Passport"
                             title="DPP Viewer"
                             :to="dppViewerTarget"
@@ -157,7 +157,7 @@
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/details/edit')"
+                            :border="isActiveRoutePath('/dpp/detail/edit')"
                             subtitle="Edit Digital Product Passport"
                             title="DPP Editor"
                             :to="dppEditorTarget"
@@ -274,23 +274,23 @@
             const raw = (globalAssetId || aasId || '') as string;
             return raw.trim() !== '' ? encodeURIComponent(raw) : '';
         }
-        const match = currentRoutePath.value.match(/^\/dpp\/details(?:\/edit)?\/(.+)$/);
+        const match = currentRoutePath.value.match(/^\/dpp\/detail(?:\/edit)?\/(.+)$/);
         return match ? match[1] : '';
     });
     const dppViewerTarget = computed(() => {
         const id = dppProductId.value;
-        return isActiveRoutePath('/dpp/details') && !isActiveRoutePath('/dpp/details/edit')
+        return isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')
             ? ''
             : id
-              ? { path: `/dpp/details/${id}` }
+              ? { path: `/dpp/detail/${id}` }
               : { path: '/dpp/list' };
     });
     const dppEditorTarget = computed(() => {
         const id = dppProductId.value;
-        return isActiveRoutePath('/dpp/details/edit')
+        return isActiveRoutePath('/dpp/detail/edit')
             ? ''
             : id
-              ? { path: `/dpp/details/edit/${id}` }
+              ? { path: `/dpp/detail/edit/${id}` }
               : { path: '/dpp/list' };
     });
     const filteredAndOrderedModuleRoutes = computed(() => {
