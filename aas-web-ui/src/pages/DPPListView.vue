@@ -43,7 +43,7 @@
           v-for="aas in filteredAas"
           :key="aas.id"
           class="aas-item"
-          @click="goToAas(aas.id)"
+          @click="goToAas(aas.id, aas.name)"
         >
 
           <!-- Icon links -->
@@ -199,8 +199,9 @@ const filteredAas = computed(() => {
 })
 
 /* Navigation */
-function goToAas(id: string) {
-  router.push({ name: 'DPPDetailPage', query: { productId: id } })
+function goToAas(id: string, name?: string) {
+  // Pass the human-readable name via history state so it is not visible in the URL
+  router.push({ name: 'DPPDetailPage', query: { productId: id }, state: { name } })
 }
 </script>
 

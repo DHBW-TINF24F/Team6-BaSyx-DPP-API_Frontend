@@ -41,7 +41,7 @@
                     <div>
                         <div class="text-overline text-primary mb-1">Digital Product Passport</div>
                         <h1 class="dpp-title text-h4 font-weight-bold mb-2">
-                            {{ dpp.productId }}
+                            {{ nameFromState || dpp.productId }}
                         </h1>
                         <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">
                             DPP-ID: {{ dpp.dppId }}
@@ -238,6 +238,11 @@ const productId = computed(() => {
     }
 
     return queryValue ? String(queryValue).trim() : ''
+})
+
+// Read optional name passed via router history state (not visible in URL)
+const nameFromState = computed(() => {
+    return (route.state as any)?.name ?? ''
 })
 
 // ─── State ────────────────────────────────────────────────────────────────────
