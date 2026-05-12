@@ -278,12 +278,9 @@
         return match ? match[1] : '';
     });
     const dppViewerTarget = computed(() => {
-        const id = dppProductId.value;
         return isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')
             ? ''
-            : id
-              ? { path: `/dpp/detail/${id}` }
-              : { path: '/dpp/list' };
+            : { path: '/dpp/detail' };
     });
     const dppEditorTarget = computed(() => {
         const id = dppProductId.value;

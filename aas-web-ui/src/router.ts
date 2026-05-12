@@ -13,7 +13,6 @@ import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
 import DPPEditor from '@/pages/DPPEditor.vue';
 import DPPListView from '@/pages/DPPListView.vue';
-import DPPViewer from '@/pages/DPPViewer.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
@@ -77,18 +76,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
         meta: { name: 'Design Skeletton', subtitle: 'Design Testing Page' },
     },
     {
-        path: '/dpp/detail',
-        name: 'DPPDetailPage',
-        component: DPPDetailPage,
-        meta: { name: 'DPP Detail Page', subtitle: 'Detail view for DPP' },
-    },
-    {
-        path: '/dpp/list',
-        name: 'DPPListView',
-        component: DPPListView,
-        meta: { name: 'DPP List', subtitle: 'List of DPPs' },
-    },
-    {
         path: '/',
         name: 'Root',
         component: Page404,
@@ -142,9 +129,9 @@ const staticRoutes: Array<RouteRecordRaw> = [
     },
     {
         path: '/dpp/detail/:productId?',
-        name: 'DPPViewer',
-        component: DPPViewer,
-        meta: { name: 'DPP Viewer', subtitle: 'View Digital Product Passport' },
+        name: 'DPPDetailPage',
+        component: DPPDetailPage,
+        meta: { name: 'DPP Detail', subtitle: 'Detail view for DPP' },
     },
     { path: '/404', name: 'NotFound404', component: Page404, meta: { name: 'Page not found | 404' } },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: Page404 },
@@ -260,7 +247,7 @@ export async function createAppRouter(): Promise<Router> {
         'SubmodelList',
         'Visualization',
         'DPPList',
-        'DPPViewer',
+        'DPPDetailPage',
         'DPPEditor',
     ];
     const routesForDesktop: Array<RouteRecordNameGeneric> = [
@@ -271,7 +258,7 @@ export async function createAppRouter(): Promise<Router> {
         'SMViewer',
         'Visualization',
         'DPPList',
-        'DPPViewer',
+        'DPPDetailPage',
         'DPPEditor',
     ];
     const routesOnlyMobile: Array<RouteRecordNameGeneric> = routesForMobile.filter(
