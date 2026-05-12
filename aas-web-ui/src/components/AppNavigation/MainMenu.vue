@@ -263,31 +263,33 @@
     const isMobile = computed(() => navigationStore.getIsMobile); // Check if the current Device is a Mobile Device
     const currentRoutePath = computed(() => route.path); // get the current route path
     const allowEditing = computed(() => envStore.getAllowEditing); // Check if the current environment allows showing the AAS resp. SM Editor
-    const smViewerEditor = computed(() => envStore.getSmViewerEditor); // Check the current environment allows showing the SM Viewer/Editor
     const moduleRoutes = computed(() => navigationStore.getModuleRoutes); // get the module routes
     const selectedAas = computed(() => aasStore.getSelectedAAS); // get selected AAS from Store
     const selectedNode = computed(() => aasStore.getSelectedNode); // get selected AAS from Store
     const dppProductId = computed((): string => {
         if (selectedAas.value && Object.keys(selectedAas.value).length > 0) {
-            const globalAssetId = selectedAas.value?.assetInformation?.globalAssetId;
-            const aasId = selectedAas.value?.id;
-            const raw = (globalAssetId || aasId || '') as string;
-            return raw.trim() !== '' ? encodeURIComponent(raw) : '';
+            const aasId = (selectedAas.value?.id || '') as string;
+            return aasId.trim();
         }
-        const match = currentRoutePath.value.match(/^\/dpp\/detail(?:\/edit)?\/(.+)$/);
-        return match ? match[1] : '';
+        const encoded = route.query.productId as string | undefined;
+        if (!encoded) return '';
+        try {
+            return atob(encoded);
+        } catch {
+            return '';
+        }
     });
     const dppViewerTarget = computed(() => {
-        return isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')
-            ? ''
-            : { path: '/dpp/detail' };
+        if (isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')) return '';
+        const id = dppProductId.value;
+        return id ? { path: '/dpp/detail', query: { productId: btoa(id) } } : { path: '/dpp/detail' };
     });
     const dppEditorTarget = computed(() => {
         const id = dppProductId.value;
         return isActiveRoutePath('/dpp/detail/edit')
             ? ''
             : id
-              ? { path: `/dpp/detail/edit/${id}` }
+              ? { path: `/dpp/detail/edit/${encodeURIComponent(id)}` }
               : { path: '/dpp/list' };
     });
     const filteredAndOrderedModuleRoutes = computed(() => {
