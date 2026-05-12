@@ -200,7 +200,7 @@ const filteredAas = computed(() => {
 
 /* Navigation */
 function goToAas(id: string) {
-  router.push(`/aas/${id}`)
+  router.push(`/dpp/detail/${id}`)
 }
 </script>
 
