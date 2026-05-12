@@ -266,31 +266,21 @@
     const moduleRoutes = computed(() => navigationStore.getModuleRoutes); // get the module routes
     const selectedAas = computed(() => aasStore.getSelectedAAS); // get selected AAS from Store
     const selectedNode = computed(() => aasStore.getSelectedNode); // get selected AAS from Store
-    const dppProductId = computed((): string => {
-        if (selectedAas.value && Object.keys(selectedAas.value).length > 0) {
-            const aasId = (selectedAas.value?.id || '') as string;
-            return aasId.trim();
-        }
-        const encoded = route.query.productId as string | undefined;
-        if (!encoded) return '';
-        try {
-            return atob(encoded);
-        } catch {
-            return '';
-        }
+    const dppAasQuery = computed((): string => {
+        const fromRoute = route.query.aas as string | undefined;
+        if (fromRoute) return fromRoute;
+        const fromSaved = navigationStore.getUrlQuery.aas as string | undefined;
+        return fromSaved || '';
     });
     const dppViewerTarget = computed(() => {
         if (isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')) return '';
-        const id = dppProductId.value;
-        return id ? { path: '/dpp/detail', query: { productId: btoa(id) } } : { path: '/dpp/detail' };
+        const aas = dppAasQuery.value;
+        return aas ? { path: '/dpp/detail', query: { aas } } : { path: '/dpp/detail' };
     });
     const dppEditorTarget = computed(() => {
-        const id = dppProductId.value;
-        return isActiveRoutePath('/dpp/detail/edit')
-            ? ''
-            : id
-              ? { path: `/dpp/detail/edit/${encodeURIComponent(id)}` }
-              : { path: '/dpp/list' };
+        if (isActiveRoutePath('/dpp/detail/edit')) return '';
+        const aas = dppAasQuery.value;
+        return aas ? { path: '/dpp/detail/edit', query: { aas } } : { path: '/dpp/list' };
     });
     const filteredAndOrderedModuleRoutes = computed(() => {
         const filteredModuleRoutes = moduleRoutes.value.filter((moduleRoute: RouteRecordRaw) => {
