@@ -43,7 +43,7 @@
           v-for="aas in filteredAas"
           :key="aas.id"
           class="aas-item"
-          @click="goToAas(aas.id)"
+          @click="goToAas(aas.id, aas.name)"
         >
 
           <!-- Icon links -->
@@ -198,11 +198,12 @@ const filteredAas = computed(() => {
   )
 })
 
-/* Navigation zur passenden DPP Detailseite */
-/* ID wird base64-kodiert */
-function goToAas(id: string) {
+/* Navigation */
+function goToAas(id: string, name?: string) {
   const encodedId = btoa(id)
-  router.push(`/dpp/detail/${encodedId}`)
+  // Pass the human-readable name via history state so it is not visible in the URL
+  router.push({ name: 'DPPDetailPage', query: { productId: encodedId }, state: { name } })
+
 }
 </script>
 

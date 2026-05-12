@@ -18,6 +18,7 @@ import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
 import DesignSkeletton from '@/pages/DesignSkeletton.vue';
+import DPPDetailPage from '@/pages/DPPDetailPage.vue';
 import { useAASStore } from '@/store/AASDataStore';
 import { useEnvStore } from '@/store/EnvironmentStore';
 import { useInfrastructureStore } from '@/store/InfrastructureStore';
@@ -74,6 +75,12 @@ const staticRoutes: Array<RouteRecordRaw> = [
         name: 'DesignSkeletton',
         component: DesignSkeletton,
         meta: { name: 'Design Skeletton', subtitle: 'Design Testing Page' },
+    },
+    {
+        path: '/dpp/detail',
+        name: 'DPPDetailPage',
+        component: DPPDetailPage,
+        meta: { name: 'DPP Detail Page', subtitle: 'Detail view for DPP' },
     },
     {
         path: '/dpp/list',
@@ -142,7 +149,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
     { path: '/404', name: 'NotFound404', component: Page404, meta: { name: 'Page not found | 404' } },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: Page404 },
 ];
-
 
 // Function to generate routes from modules
 const generateModuleRoutes = async (): Promise<Array<RouteRecordRaw>> => {
