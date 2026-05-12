@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-
 import {
     buildBasyxSnapshot,
     installIntegrationBackendMock,
@@ -42,7 +41,9 @@ describe('BaSyxIntegration.test.ts; STR-aligned BaSyx discovery and orchestratio
 
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).statusCode).toBe(200);
-                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(testProductId);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(
+                    testProductId
+                );
             },
         },
         {
@@ -58,7 +59,9 @@ describe('BaSyxIntegration.test.ts; STR-aligned BaSyx discovery and orchestratio
                     },
                     registryIdentifier: testRegistryIdentifier,
                 });
-                expect((snapshot.submodelReferences as Array<string>)).toContain('https://admin-shell.io/idta/TechnicalData/1/0');
+                expect(snapshot.submodelReferences as Array<string>).toContain(
+                    'https://admin-shell.io/idta/TechnicalData/1/0'
+                );
             },
         },
         {

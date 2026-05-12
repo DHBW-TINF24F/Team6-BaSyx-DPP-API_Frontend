@@ -13,15 +13,12 @@
  *   node scripts/setupTestData.mjs http://backend.example.com:8080
  */
 
-// Removed unused imports: readFileSync, resolve, fileURLToPath
-
 // Configuration
 const BACKEND_BASE_URL = process.argv[2] || process.env.DPP_BACKEND_BASE_URL || 'http://localhost:8080';
 const TEST_DPP_ID = 'urn:uuid:test-dpp-1';
 const TEST_PRODUCT_ID = 'urn:uuid:prod-123';
 const TEST_REGISTRY_ID = 'aas-registry://dpps/test-dpp-1';
 
-// NAMESPACE constants kept only where used; remove unused NAMESCOPE_NAMEPLATE
 const NAMEPLATE_SEMANTIC_ID = 'https://admin-shell.io/idta/Nameplate/1/0';
 const TECHNICAL_DATA_SEMANTIC_ID = 'https://admin-shell.io/idta/TechnicalData/1/0';
 const CARBON_FOOTPRINT_SEMANTIC_ID = 'https://admin-shell.io/idta/CarbonFootprint/1/0';
@@ -110,7 +107,7 @@ async function checkHealth() {
 
         console.error(`[ERROR] Backend health check failed: ${result.status}`);
         return false;
-    } catch (error) {
+    } catch {
         console.error('[ERROR] Cannot connect to backend. Make sure it is running.');
         return false;
     }

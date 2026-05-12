@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ========== Type Definitions ==========
-type StatusCode = 
-    | 'Success' 
-    | 'SuccessCreated' 
+type StatusCode =
+    | 'Success'
+    | 'SuccessCreated'
     | 'SuccessAccepted'
     | 'SuccessNoContent'
     | 'ClientErrorBadRequest'
@@ -365,10 +365,7 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
     it('IT-API-05: ReadDPPIdsByProductIds - should POST to /dppsbyProductIds and return identifiers', async () => {
         const identifiersPayload: DppIdentifiersPayload = {
             productId: 'battery-pack-001',
-            dpps: [
-                { dppId: 'dpp-001' },
-                { dppId: 'dpp-002' },
-            ],
+            dpps: [{ dppId: 'dpp-001' }, { dppId: 'dpp-002' }],
         };
 
         const response: SuccessResponse<DppIdentifiersPayload> = {
@@ -466,8 +463,8 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
     // ========== ReadDataElementCollection Tests ==========
     it('IT-API-09: ReadDataElementCollection - should GET /dpps/{dppId}/collections/{elementId}', async () => {
         const collectionPayload = {
-            'ProductArticleNumberOfManufacturer': '09 30 024 0301',
-            'ManufacturerName': [{ de: 'HARTING Electric Stiftung & Co. KG' }],
+            ProductArticleNumberOfManufacturer: '09 30 024 0301',
+            ManufacturerName: [{ de: 'HARTING Electric Stiftung & Co. KG' }],
         };
 
         const response: SuccessResponse<typeof collectionPayload> = {

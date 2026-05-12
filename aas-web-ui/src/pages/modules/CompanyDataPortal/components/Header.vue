@@ -7,10 +7,7 @@
             </RouterLink>
 
             <!-- Powered by BaSyx Logo -->
-            <img
-                src="@/assets/PoweredByBaSyx.svg"
-                alt="Powered by BaSyx"
-                class="h-30 w-auto border-none shadow-none" />
+            <img src="@/assets/PoweredByBaSyx.svg" alt="Powered by BaSyx" class="h-30 w-auto border-none shadow-none" />
         </div>
     </header>
 </template>

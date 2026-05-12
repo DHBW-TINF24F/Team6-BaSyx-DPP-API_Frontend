@@ -10,18 +10,15 @@
                     density="comfortable"
                     hide-details
                     clearable
-                    class="search-bar"
-                ></v-text-field>
+                    class="search-bar"></v-text-field>
             </v-col>
         </v-row>
         <!-- Section 1: 3 Panels nebeneinander -->
         <div class="section-title text-h5 mb-3">Kategorie 1 - Drei Panels</div>
         <v-row class="mb-6">
-            <v-col cols="4" v-for="n in 3" :key="'section1-' + n">
+            <v-col v-for="n in 3" :key="'section1-' + n" cols="4">
                 <v-card class="panel-card" elevation="2">
-                    <v-card-title class="panel-header">
-                        Panel {{ n }}
-                    </v-card-title>
+                    <v-card-title class="panel-header"> Panel {{ n }} </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
                             <v-icon size="48" color="grey">mdi-image-outline</v-icon>
@@ -37,9 +34,7 @@
         <v-row class="mb-6">
             <v-col cols="12">
                 <v-card class="panel-card" elevation="2">
-                    <v-card-title class="panel-header">
-                        Panel 1
-                    </v-card-title>
+                    <v-card-title class="panel-header"> Panel 1 </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
                             <v-icon size="48" color="grey">mdi-image-outline</v-icon>
@@ -53,11 +48,9 @@
         <!-- Section 3: 5 Panels -->
         <div class="section-title text-h5 mb-3">Kategorie 3 - Fünf Panels</div>
         <v-row>
-            <v-col cols="12" sm="6" md="2.4" v-for="n in 5" :key="'section3-' + n" class="panel-col-5">
+            <v-col v-for="n in 5" :key="'section3-' + n" cols="12" sm="6" md="2.4" class="panel-col-5">
                 <v-card class="panel-card" elevation="2">
-                    <v-card-title class="panel-header">
-                        Panel {{ n }}
-                    </v-card-title>
+                    <v-card-title class="panel-header"> Panel {{ n }} </v-card-title>
                     <v-card-text class="panel-content">
                         <div class="image-placeholder">
                             <v-icon size="48" color="grey">mdi-image-outline</v-icon>
