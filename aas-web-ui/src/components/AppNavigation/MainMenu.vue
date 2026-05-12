@@ -4,27 +4,25 @@
             <v-container>
                 <v-sheet
                     class="overflow-hidden mx-auto mb-4"
-                    :elevation="smViewerEditor || filteredAndOrderedModuleRoutes.length > 0 ? 2 : 0"
+                    :elevation="2"
                     rounded="lg"
                     min-width="450">
-                    <template v-if="smViewerEditor || filteredAndOrderedModuleRoutes.length > 0">
-                        <v-tabs v-model="currentTab" color="primary" grow>
-                            <v-tab value="aas" class="text-none" text="AAS" />
+                    <v-tabs v-model="currentTab" color="primary" grow>
+                        <v-tab value="aas" class="text-none" text="AAS" />
 
-                            <v-divider vertical />
+                        <v-divider vertical />
 
-                            <v-tab v-if="smViewerEditor" value="submodel" class="text-none" text="Submodel" />
+                        <v-tab value="submodel" class="text-none" text="Submodel" />
 
-                            <v-divider vertical />
+                        <v-divider vertical />
 
-                            <v-tab
-                                v-if="filteredAndOrderedModuleRoutes.length > 0"
-                                value="modules"
-                                class="text-none"
-                                text="Modules" />
-                        </v-tabs>
-                        <v-divider></v-divider>
-                    </template>
+                        <v-tab value="dpp" class="text-none" text="DPP" />
+
+                        <v-divider vertical />
+
+                        <v-tab value="modules" class="text-none" text="Modules" />
+                    </v-tabs>
+                    <v-divider></v-divider>
                     <div class="pa-2">
                         <v-list-item
                             v-if="currentTab === 'aas'"
@@ -75,7 +73,7 @@
                             </template>
                         </v-list-item>
                         <v-list-item
-                            v-if="smViewerEditor && currentTab === 'submodel'"
+                            v-if="currentTab === 'submodel'"
                             class="py-2"
                             nav
                             :active="false"
@@ -91,7 +89,7 @@
                             </template>
                         </v-list-item>
                         <v-list-item
-                            v-if="smViewerEditor && allowEditing && currentTab === 'submodel'"
+                            v-if="allowEditing && currentTab === 'submodel'"
                             class="mt-3 py-2"
                             :active="false"
                             nav
@@ -118,6 +116,54 @@
                             @click="closeMenu">
                             <template #prepend>
                                 <v-avatar color="surface-light" icon="mdi-chart-line" rounded>
+                                    <v-icon color="medium-emphasis" />
+                                </v-avatar>
+                            </template>
+                        </v-list-item>
+                        <v-list-item
+                            v-if="currentTab === 'dpp'"
+                            class="py-2"
+                            :active="false"
+                            nav
+                            :border="isActiveRoutePath('/dpp/list')"
+                            subtitle="All Digital Product Passports"
+                            title="DPP List"
+                            :to="isActiveRoutePath('/dpp/list') ? '' : { path: '/dpp/list' }"
+                            @click="closeMenu">
+                            <template #prepend>
+                                <v-avatar color="surface-light" icon="mdi-format-list-bulleted" rounded>
+                                    <v-icon color="medium-emphasis" />
+                                </v-avatar>
+                            </template>
+                        </v-list-item>
+                        <v-list-item
+                            v-if="currentTab === 'dpp'"
+                            class="mt-3 py-2"
+                            :active="false"
+                            nav
+                            :border="isActiveRoutePath('/dpp/details') && !isActiveRoutePath('/dpp/details/edit')"
+                            subtitle="View Digital Product Passport"
+                            title="DPP Viewer"
+                            :to="dppViewerTarget"
+                            @click="closeMenu">
+                            <template #prepend>
+                                <v-avatar color="surface-light" icon="mdi-certificate-outline" rounded>
+                                    <v-icon color="medium-emphasis" />
+                                </v-avatar>
+                            </template>
+                        </v-list-item>
+                        <v-list-item
+                            v-if="allowEditing && currentTab === 'dpp'"
+                            class="mt-3 py-2"
+                            :active="false"
+                            nav
+                            :border="isActiveRoutePath('/dpp/details/edit')"
+                            subtitle="Edit Digital Product Passport"
+                            title="DPP Editor"
+                            :to="dppEditorTarget"
+                            @click="closeMenu">
+                            <template #prepend>
+                                <v-avatar color="surface-light" icon="mdi-pencil" rounded>
                                     <v-icon color="medium-emphasis" />
                                 </v-avatar>
                             </template>
@@ -221,6 +267,32 @@
     const moduleRoutes = computed(() => navigationStore.getModuleRoutes); // get the module routes
     const selectedAas = computed(() => aasStore.getSelectedAAS); // get selected AAS from Store
     const selectedNode = computed(() => aasStore.getSelectedNode); // get selected AAS from Store
+    const dppProductId = computed((): string => {
+        if (selectedAas.value && Object.keys(selectedAas.value).length > 0) {
+            const globalAssetId = selectedAas.value?.assetInformation?.globalAssetId;
+            const aasId = selectedAas.value?.id;
+            const raw = (globalAssetId || aasId || '') as string;
+            return raw.trim() !== '' ? encodeURIComponent(raw) : '';
+        }
+        const match = currentRoutePath.value.match(/^\/dpp\/details(?:\/edit)?\/(.+)$/);
+        return match ? match[1] : '';
+    });
+    const dppViewerTarget = computed(() => {
+        const id = dppProductId.value;
+        return isActiveRoutePath('/dpp/details') && !isActiveRoutePath('/dpp/details/edit')
+            ? ''
+            : id
+              ? { path: `/dpp/details/${id}` }
+              : { path: '/dpp/list' };
+    });
+    const dppEditorTarget = computed(() => {
+        const id = dppProductId.value;
+        return isActiveRoutePath('/dpp/details/edit')
+            ? ''
+            : id
+              ? { path: `/dpp/details/edit/${id}` }
+              : { path: '/dpp/list' };
+    });
     const filteredAndOrderedModuleRoutes = computed(() => {
         const filteredModuleRoutes = moduleRoutes.value.filter((moduleRoute: RouteRecordRaw) => {
             if (isMobile.value && !moduleRoute?.meta?.isMobileModule) return false;
@@ -288,6 +360,8 @@
             currentTab.value = 'aas';
         } else if (isActiveRoutePath('/smviewer') || isActiveRoutePath('/smeditor') || isActiveRoutePath('/visu')) {
             currentTab.value = 'submodel';
+        } else if (isActiveRoutePath('/dpp')) {
+            currentTab.value = 'dpp';
         } else {
             currentTab.value = 'modules';
         }

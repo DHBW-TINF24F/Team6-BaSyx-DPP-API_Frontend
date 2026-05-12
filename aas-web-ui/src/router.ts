@@ -11,6 +11,9 @@ import AASEditor from '@/pages/AASEditor.vue';
 import AASSubmodelViewer from '@/pages/AASSubmodelViewer.vue';
 import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
+import DPPEditor from '@/pages/DPPEditor.vue';
+import DPPList from '@/pages/DPPList.vue';
+import DPPViewer from '@/pages/DPPViewer.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
@@ -111,6 +114,24 @@ const staticRoutes: Array<RouteRecordRaw> = [
         name: 'About',
         component: About,
         meta: { name: 'About' },
+    },
+    {
+        path: '/dpp/list',
+        name: 'DPPList',
+        component: DPPList,
+        meta: { name: 'DPP List', subtitle: 'All Digital Product Passports' },
+    },
+    {
+        path: '/dpp/details/edit/:productId?',
+        name: 'DPPEditor',
+        component: DPPEditor,
+        meta: { name: 'DPP Editor', subtitle: 'Edit Digital Product Passport' },
+    },
+    {
+        path: '/dpp/details/:productId?',
+        name: 'DPPViewer',
+        component: DPPViewer,
+        meta: { name: 'DPP Viewer', subtitle: 'View Digital Product Passport' },
     },
     { path: '/404', name: 'NotFound404', component: Page404, meta: { name: 'Page not found | 404' } },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: Page404 },
@@ -221,7 +242,14 @@ export async function createAppRouter(): Promise<Router> {
 
     // Data
     const routesStayOnPages: Array<RouteRecordNameGeneric> = ['About', 'NotFound404'];
-    const routesForMobile: Array<RouteRecordNameGeneric> = ['AASList', 'SubmodelList', 'Visualization'];
+    const routesForMobile: Array<RouteRecordNameGeneric> = [
+        'AASList',
+        'SubmodelList',
+        'Visualization',
+        'DPPList',
+        'DPPViewer',
+        'DPPEditor',
+    ];
     const routesForDesktop: Array<RouteRecordNameGeneric> = [
         'AASEditor',
         'AASViewer',
@@ -229,6 +257,9 @@ export async function createAppRouter(): Promise<Router> {
         'SMEditor',
         'SMViewer',
         'Visualization',
+        'DPPList',
+        'DPPViewer',
+        'DPPEditor',
     ];
     const routesOnlyMobile: Array<RouteRecordNameGeneric> = routesForMobile.filter(
         (x) => !routesForDesktop.includes(x)
