@@ -129,15 +129,15 @@ function createDppApiClient(baseUrl = '/api/dpps') {
             return response.json();
         },
         async readDppByProductId(productId: string) {
-            const response = await fetch(`${baseUrl}ByProductId/${productId}`);
+            const response = await fetch(`/api/dppsbyProductId/${productId}`);
             return response.json();
         },
         async readDppVersionByProductIdAndDate(productId: string, date: string) {
-            const response = await fetch(`${baseUrl}ByProductIdAndDate/${productId}?date=${encodeURIComponent(date)}`);
+            const response = await fetch(`/api/dppsbyProductIdAndDate/${productId}?date=${encodeURIComponent(date)}`);
             return response.json();
         },
         async readDppIdsByProductIds(productIds: string[]) {
-            const response = await fetch(`${baseUrl}ByProductIds`, {
+            const response = await fetch(`/api/dppsbyProductIds`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ productIds }),
