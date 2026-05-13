@@ -35,7 +35,7 @@
                     <div>
                         <div class="text-overline text-primary mb-1">Digital Product Passport</div>
                         <h1 class="dpp-title text-h4 font-weight-bold mb-2">{{ nameFromState }}</h1>
-                        <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">DPP-ID: {{ dpp.dppId }}</p>
+                        <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">DPP-ID: {{ decodeBase64(dpp.dppId) }}</p>
                     </div>
                     <v-btn class="back-btn" variant="elevated" color="white" prepend-icon="mdi-arrow-left" size="small" elevation="3" @click="goBack">
                         Zurück
@@ -47,11 +47,11 @@
                 <v-row dense>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">Product ID</div>
-                        <div class="meta-value text-break">{{ dpp.productId }}</div>
+                        <div class="meta-value text-break">{{ decodeBase64(dpp.productId) }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">DPP ID</div>
-                        <div class="meta-value text-break">{{ dpp.dppId }}</div>
+                        <div class="meta-value text-break">{{ decodeBase64(dpp.dppId) }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">Version</div>
@@ -123,29 +123,6 @@
                 <!-- Sidebar -->
                 <v-col cols="12" md="4">
                     <v-card class="sidebar-card pa-6" elevation="2">
-                        <h2 class="section-title text-h5 font-weight-bold mb-4">Informationen</h2>
-                        <v-list density="comfortable" class="bg-transparent pa-0">
-                            <v-list-item class="px-0">
-                                <v-list-item-title>Product ID</v-list-item-title>
-                                <v-list-item-subtitle class="text-break">{{ dpp.productId }}</v-list-item-subtitle>
-                            </v-list-item>
-                            <v-list-item class="px-0">
-                                <v-list-item-title>DPP ID</v-list-item-title>
-                                <v-list-item-subtitle class="text-break">{{ dpp.dppId }}</v-list-item-subtitle>
-                            </v-list-item>
-                            <v-list-item class="px-0">
-                                <v-list-item-title>Version</v-list-item-title>
-                                <v-list-item-subtitle>{{ dpp.version || '-' }}</v-list-item-subtitle>
-                            </v-list-item>
-                        </v-list>
-
-                        <v-divider class="border-primary my-6" thickness="2" />
-
-                        <h2 class="section-title text-h5 font-weight-bold mb-4">Weitere Details</h2>
-                        <div class="text-body-2 text-grey-darken-1 text-break">Erstellt am: {{ dpp.createdAt || '-' }}</div>
-
-                        <v-divider class="border-primary my-6" thickness="2" />
-
                         <h2 class="section-title text-h5 font-weight-bold mb-4">Submodels</h2>
                         <div class="d-flex flex-column ga-2">
                             <div
@@ -170,8 +147,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, defineComponent, h, onMounted, ref, watch, type PropType, type VNode } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAASStore } from '@/store/AASDataStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SubmodelEntry {
@@ -201,25 +179,54 @@ interface DppApiResponse {
     payload?: { dpp?: Dpp; submodels_values?: Record<string, unknown[]> }
     result?: { message?: Array<{ text?: string }> }
 }
-// ─── Router & Route ───────────────────────────────────────────────────────────
-const route = useRoute()
-const router = useRouter()
+
+// ─── Store & Router ───────────────────────────────────────────────────────────
+const aasStore = useAASStore()
+const router   = useRouter()
 
 const selectedAas = computed(() => aasStore.getSelectedAAS)
 
 const productId = computed(() => {
-    const queryValue = route.query.productId ?? route.query.id
-    if (Array.isArray(queryValue)) {
-        return queryValue[0] ? String(queryValue[0]).trim() : ''
-    }
-
-    return queryValue ? String(queryValue).trim() : ''
+    const aas = selectedAas.value
+    if (!aas || Object.keys(aas).length === 0) return ''
+    return (aas.assetInformation?.globalAssetId || aas.id || '') as string
 })
 
-// Read optional name passed via router history state (not visible in URL)
 const nameFromState = computed(() => {
-    return (route.state as any)?.name ?? ''
+    const aas = selectedAas.value
+    if (!aas || Object.keys(aas).length === 0) return ''
+    const displayName = aas.displayName as Array<{ language: string; text: string }> | undefined
+    return displayName?.find((d: any) => d.language?.startsWith('en'))?.text
+        || displayName?.[0]?.text
+        || aas.idShort
+        || ''
 })
+
+// ─── Base64 decode helper ─────────────────────────────────────────────────────
+/**
+ * Safely decode a Base64-encoded string (with or without trailing `=` padding).
+ * Falls back to the original value if decoding fails or the input is empty.
+ */
+function decodeBase64(encoded: string | undefined | null): string {
+    if (!encoded) return '-'
+    try {
+        // Re-add padding that may have been stripped (`=`)
+        let padded = encoded
+        const remainder = padded.length % 4
+        if (remainder === 2) padded += '=='
+        else if (remainder === 3) padded += '='
+
+        return decodeURIComponent(
+            atob(padded)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        )
+    } catch {
+        // Not valid Base64 – return as-is
+        return encoded
+    }
+}
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const dpp              = ref<Dpp | null>(null)
@@ -387,7 +394,7 @@ function renderCollection(entry: SubmodelEntry, index: number, depth: number, is
 
 function renderEntries(entries: SubmodelEntry[], depth: number): VNode[] {
     return entries.map((entry, idx) => {
-        const isLast  = idx === entries.length - 1
+        const isLast   = idx === entries.length - 1
         const children = getChildEntries(entry)
         return children.length > 0
             ? renderCollection(entry, idx, depth, isLast)
@@ -410,8 +417,7 @@ function goBack() { router.push({ name: 'DPPListView' }) }
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadDpp(): Promise<void> {
-    const currentProductId = productId.value
-
+    const currentProductId = btoa(productId.value).replace(/=/g, '')
     if (!currentProductId) {
         dpp.value = null
         errorMessage.value = ''
@@ -454,13 +460,8 @@ async function loadDpp(): Promise<void> {
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => {
-    void loadDpp()
-})
-
-watch(productId, () => {
-    void loadDpp()
-})
+onMounted(() => { void loadDpp() })
+watch(productId, () => { void loadDpp() })
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -525,112 +526,47 @@ watch(productId, () => {
 .vt-prop:hover      { background-color: rgba(var(--v-theme-primary), .035); }
 .vt-prop--last      { border-bottom: none; }
 
-/* accent bar */
 .vt-prop-bar {
-    width: 3px;
-    align-self: stretch;
-    min-height: 20px;
-    border-radius: 2px;
-    background: rgb(var(--v-theme-primary));
-    opacity: .3;
+    width: 3px; align-self: stretch; min-height: 20px;
+    border-radius: 2px; background: rgb(var(--v-theme-primary)); opacity: .3;
 }
-
-/* icon */
 .vt-prop-icon {
-    font-size: 14px;
-    color: rgb(var(--v-theme-primary));
-    opacity: .6;
-    justify-self: center;
+    font-size: 14px; color: rgb(var(--v-theme-primary)); opacity: .6; justify-self: center;
 }
-
-/* key */
 .vt-prop-key {
-    font-size: .8rem;
-    font-weight: 600;
-    color: rgb(var(--v-theme-primary));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: .8rem; font-weight: 600; color: rgb(var(--v-theme-primary));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
-/* value */
 .vt-prop-val {
-    font-size: .8375rem;
-    color: rgb(var(--v-theme-titleText));
-    word-break: break-word;
-    opacity: .88;
+    font-size: .8375rem; color: rgb(var(--v-theme-titleText)); word-break: break-word; opacity: .88;
 }
 
-/* links */
-.vt-link {
-    color: rgb(var(--v-theme-primary));
-    text-decoration: none;
-    font-weight: 500;
-    word-break: break-all;
-}
+.vt-link { color: rgb(var(--v-theme-primary)); text-decoration: none; font-weight: 500; word-break: break-all; }
 .vt-link:hover { text-decoration: underline; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    COLLECTION / GROUP
 ══════════════════════════════════════════════════════════════════════════ */
 .vt-group {
-    border-radius: 8px;
-    border: 1px solid rgba(var(--v-theme-primary), .12);
-    overflow: hidden;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    border-radius: 8px; border: 1px solid rgba(var(--v-theme-primary), .12);
+    overflow: hidden; margin-top: 4px; margin-bottom: 4px;
 }
 .vt-group--last { margin-bottom: 0; }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
 .vt-group-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background-color: rgba(var(--v-theme-primary), .07);
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background-color: rgba(var(--v-theme-primary), .07);
 }
+.vt-group-icon  { font-size: 15px; color: rgb(var(--v-theme-primary)); opacity: .8; flex-shrink: 0; }
+.vt-group-label { font-size: .825rem; font-weight: 700; color: rgb(var(--v-theme-primary)); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vt-group-count { font-size: .675rem; font-weight: 700; color: rgb(var(--v-theme-primary)); background: rgba(var(--v-theme-primary), .12); border-radius: 10px; padding: 1px 7px; flex-shrink: 0; line-height: 1.4; }
 
-.vt-group-icon {
-    font-size: 15px;
-    color: rgb(var(--v-theme-primary));
-    opacity: .8;
-    flex-shrink: 0;
-}
-
-.vt-group-label {
-    font-size: .825rem;
-    font-weight: 700;
-    color: rgb(var(--v-theme-primary));
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.vt-group-count {
-    font-size: .675rem;
-    font-weight: 700;
-    color: rgb(var(--v-theme-primary));
-    background: rgba(var(--v-theme-primary), .12);
-    border-radius: 10px;
-    padding: 1px 7px;
-    flex-shrink: 0;
-    line-height: 1.4;
-}
-
-/* ── Body (recursive children) ─────────────────────────────────────────────── */
 .vt-group-body {
     padding: 6px 10px 8px 14px;
     border-left: 2px solid rgba(var(--v-theme-primary), .18);
-    margin-left: 0;
 }
 
-/* Nested groups get a slightly subtler header so the hierarchy is visible */
-.vt-group-body .vt-group-head {
-    background-color: rgba(var(--v-theme-primary), .045);
-}
-.vt-group-body .vt-group-body .vt-group-head {
-    background-color: rgba(var(--v-theme-primary), .03);
-}
+/* Nested groups: progressively subtler headers */
+.vt-group-body .vt-group-head                  { background-color: rgba(var(--v-theme-primary), .045); }
+.vt-group-body .vt-group-body .vt-group-head   { background-color: rgba(var(--v-theme-primary), .03); }
 </style>
