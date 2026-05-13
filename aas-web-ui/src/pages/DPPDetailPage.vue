@@ -261,7 +261,7 @@ function goBack() {
     router.push({ name: 'DesignSkeletton' })
 }
 async function loadDpp(): Promise<void> {
-    const currentProductId = productId.value
+    const currentProductId = btoa(productId.value).replace(/=/g, '')
 
     if (!currentProductId) {
         dpp.value = null
@@ -274,7 +274,7 @@ async function loadDpp(): Promise<void> {
     errorMessage.value = ''
 
     try {
-        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${encodeURIComponent(currentProductId)}`)
+        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${currentProductId}`)
         const data = (await response.json()) as DppApiResponse
 
         // Normalize response shapes:
