@@ -187,7 +187,8 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useAASStore } from '@/store/AASDataStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Dpp {
@@ -227,22 +228,26 @@ interface DppApiResponse {
         }>
     }
 }
-// ─── Router & Route ───────────────────────────────────────────────────────────
-const route = useRoute()
+// ─── Store & Router ───────────────────────────────────────────────────────────
+const aasStore = useAASStore()
 const router = useRouter()
 
-const productId = computed(() => {
-    const queryValue = route.query.productId ?? route.query.id
-    if (Array.isArray(queryValue)) {
-        return queryValue[0] ? String(queryValue[0]).trim() : ''
-    }
+const selectedAas = computed(() => aasStore.getSelectedAAS)
 
-    return queryValue ? String(queryValue).trim() : ''
+const productId = computed(() => {
+    const aas = selectedAas.value
+    if (!aas || Object.keys(aas).length === 0) return ''
+    return (aas.assetInformation?.globalAssetId || aas.id || '') as string
 })
 
-// Read optional name passed via router history state (not visible in URL)
 const nameFromState = computed(() => {
-    return (route.state as any)?.name ?? ''
+    const aas = selectedAas.value
+    if (!aas || Object.keys(aas).length === 0) return ''
+    const displayName = aas.displayName as Array<{ language: string; text: string }> | undefined
+    return displayName?.find((d: any) => d.language?.startsWith('en'))?.text
+        || displayName?.[0]?.text
+        || aas.idShort
+        || ''
 })
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -256,7 +261,7 @@ function goBack() {
     router.push({ name: 'DesignSkeletton' })
 }
 async function loadDpp(): Promise<void> {
-    const currentProductId = productId.value
+    const currentProductId = btoa(productId.value).replace(/=/g, '')
 
     if (!currentProductId) {
         dpp.value = null
@@ -269,7 +274,7 @@ async function loadDpp(): Promise<void> {
     errorMessage.value = ''
 
     try {
-        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${encodeURIComponent(currentProductId)}`)
+        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${currentProductId}`)
         const data = (await response.json()) as DppApiResponse
 
         // Normalize response shapes:
@@ -315,7 +320,7 @@ onMounted(() => {
     void loadDpp()
 })
 
-watch(productId, () => {
+watch(selectedAas, () => {
     void loadDpp()
 })
 </script>

@@ -199,11 +199,9 @@ const filteredAas = computed(() => {
 })
 
 /* Navigation */
-function goToAas(id: string, name?: string) {
-  const encodedId = btoa(id)
-  // Pass the human-readable name via history state so it is not visible in the URL
-  router.push({ name: 'DPPDetailPage', query: { productId: encodedId }, state: { name } })
-
+function goToAas(id: string) {
+  const aasEndpoint = `${API_URL}/${btoa(id)}`
+  router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } })
 }
 </script>
 

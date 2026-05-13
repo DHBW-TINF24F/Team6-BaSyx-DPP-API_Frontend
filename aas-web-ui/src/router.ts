@@ -265,6 +265,7 @@ export async function createAppRouter(): Promise<Router> {
         'AASEditor', // just desktop
         'AASViewer', // just desktop
         'AASSubmodelViewer', // just desktop
+        'DPPDetailPage', // desktop and mobile
 
         'AASList', // just mobile
         'SubmodelList', // just mobile
@@ -788,7 +789,10 @@ export async function createAppRouter(): Promise<Router> {
                 const updatedRoute = { path: to.path, query };
                 return updatedRoute;
             }
-        } else if (!to.query.aas || to.query.aas === '') {
+        } else if (
+            (!to.query.aas || to.query.aas === '') &&
+            !['DPPList', 'DPPEditor'].includes(String(to.name))
+        ) {
             aasStore.dispatchSelectedAAS({});
         }
 
