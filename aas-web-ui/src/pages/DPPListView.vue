@@ -97,6 +97,7 @@
 import { useEnvStore } from '@/store/EnvironmentStore'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useNavigationStore } from '@/store/NavigationStore'
 
 /* Router */
 const router = useRouter()
@@ -202,6 +203,9 @@ const filteredAas = computed(() => {
 function goToAas(id: string, name?: string) {
   const encodedId = btoa(id)
   // Pass the human-readable name via history state so it is not visible in the URL
+  // Save name in navigation store as fallback for routers that don't preserve history.state
+  const navigationStore = useNavigationStore()
+  navigationStore.setSelectedAasName(name || '')
   router.push({ name: 'DPPDetailPage', query: { productId: encodedId }, state: { name } })
 
 }
