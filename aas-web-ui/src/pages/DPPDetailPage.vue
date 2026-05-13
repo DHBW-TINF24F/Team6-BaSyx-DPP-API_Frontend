@@ -59,7 +59,7 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">Erstellt am</div>
-                        <div class="meta-value text-break">{{ dpp.createdAt || '-' }}</div>
+                        <div class="meta-value text-break">{{ new Date(dpp.createdAt * 1) }}</div>
                     </v-col>
                 </v-row>
             </v-card>
