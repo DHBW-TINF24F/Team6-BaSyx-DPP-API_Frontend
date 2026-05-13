@@ -170,9 +170,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineComponent, h, onMounted, ref, watch, type PropType, type VNode } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useNavigationStore } from '@/store/NavigationStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SubmodelEntry {
@@ -202,23 +201,25 @@ interface DppApiResponse {
     payload?: { dpp?: Dpp; submodels_values?: Record<string, unknown[]> }
     result?: { message?: Array<{ text?: string }> }
 }
-
 // ─── Router & Route ───────────────────────────────────────────────────────────
-const route  = useRoute()
+const route = useRoute()
 const router = useRouter()
+
+const selectedAas = computed(() => aasStore.getSelectedAAS)
 
 const productId = computed(() => {
     const queryValue = route.query.productId ?? route.query.id
-    if (Array.isArray(queryValue)) return queryValue[0] ? String(queryValue[0]).trim() : ''
+    if (Array.isArray(queryValue)) {
+        return queryValue[0] ? String(queryValue[0]).trim() : ''
+    }
+
     return queryValue ? String(queryValue).trim() : ''
 })
 
-const nameFromState = ref('')
-function syncNameFromHistoryState() {
-    let name = String((window.history.state as { name?: unknown } | null)?.name ?? '')
-    if (!name) { const ns = useNavigationStore(); name = ns.getSelectedAasName || '' }
-    nameFromState.value = name
-}
+// Read optional name passed via router history state (not visible in URL)
+const nameFromState = computed(() => {
+    return (route.state as any)?.name ?? ''
+})
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const dpp              = ref<Dpp | null>(null)
@@ -410,12 +411,18 @@ function goBack() { router.push({ name: 'DPPListView' }) }
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadDpp(): Promise<void> {
     const currentProductId = productId.value
-    if (!currentProductId) { dpp.value = null; errorMessage.value = ''; loading.value = false; return }
+
+    if (!currentProductId) {
+        dpp.value = null
+        errorMessage.value = ''
+        loading.value = false
+        return
+    }
 
     loading.value = true; errorMessage.value = ''; openPanels.value = []
 
     try {
-        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${encodeURIComponent(currentProductId)}`)
+        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${currentProductId}`)
         const data = (await response.json()) as DppApiResponse
 
         let resolvedDpp: Dpp | undefined
@@ -447,9 +454,13 @@ async function loadDpp(): Promise<void> {
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => { syncNameFromHistoryState(); void loadDpp() })
-watch(productId, () => { syncNameFromHistoryState(); void loadDpp() })
-onMounted(() => { const ns = useNavigationStore(); setTimeout(() => ns.clearSelectedAasName(), 500) })
+onMounted(() => {
+    void loadDpp()
+})
+
+watch(productId, () => {
+    void loadDpp()
+})
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
