@@ -507,7 +507,7 @@ export async function requestJson(
         ...init,
     });
 
-    let body: unknown = null;
+    let body: unknown;
     try {
         body = await response.json();
     } catch {
