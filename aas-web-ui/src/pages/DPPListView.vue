@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-4">
 
-    <!-- Suchfeld -->
+    <!-- Search -->
     <v-row class="mb-6" justify="center">
       <v-col cols="12" md="6">
         <v-text-field
@@ -15,80 +15,123 @@
       </v-col>
     </v-row>
 
-    <!-- Titel -->
-    <div class="section-title text-h5 mb-3">
-      Available AAS
-    </div>
+    <!-- AVAILABLE DPPS -->
+    <template v-if="availableDpps.length > 0">
+      <div class="section-title text-h5 mb-3">
+        Available DPPs
+      </div>
 
-    <!-- Liste -->
-    <v-card elevation="2">
-      <v-list lines="two">
+      <v-card elevation="2" class="mb-6">
+        <v-list lines="two">
 
-        <!-- Loading -->
-        <v-list-item v-if="loading">
-          <v-list-item-title>
-            Loading AAS...
-          </v-list-item-title>
-        </v-list-item>
+          <v-list-item v-if="loading">
+            <v-list-item-title>
+              Loading AAS...
+            </v-list-item-title>
+          </v-list-item>
 
-        <!-- Fehler -->
-        <v-list-item v-else-if="error">
-          <v-list-item-title class="text-error">
-            {{ error }}
-          </v-list-item-title>
-        </v-list-item>
+          <v-list-item v-else-if="error">
+            <v-list-item-title class="text-error">
+              {{ error }}
+            </v-list-item-title>
+          </v-list-item>
 
-        <!-- AAS Liste -->
-        <v-list-item
-          v-for="aas in filteredAas"
-          :key="aas.id"
-          class="aas-item"
-          @click="goToAas(aas.id)"
-        >
-
-          <!-- Icon links -->
-          <template #prepend>
-            <v-icon color="primary">
-              mdi-cube-outline
-            </v-icon>
-          </template>
-
-          <!-- Name + ID -->
-          <v-list-item-title
-            class="d-flex align-center ga-3"
+          <v-list-item
+            v-for="aas in availableDpps"
+            :key="aas.id"
+            class="aas-item"
+            @click="goToAas(aas.id)"
           >
-            <!-- Name -->
-            <span class="aas-name">
-              {{ aas.name }}
-            </span>
+            <template #prepend>
+              <v-icon color="primary">
+                mdi-package-variant
+              </v-icon>
+            </template>
 
-            <!-- ID Pill -->
-            <v-chip
-              size="small"
-              color="primary"
-              variant="tonal"
-              pill
-            >
-              {{ aas.id }}
-            </v-chip>
-          </v-list-item-title>
+            <v-list-item-title class="d-flex align-center ga-3">
+              <span class="aas-name">{{ aas.name }}</span>
 
-          <!-- Beschreibung -->
-          <v-list-item-subtitle>
-            {{ aas.description }}
-          </v-list-item-subtitle>
+              <v-chip
+                size="small"
+                color="primary"
+                variant="tonal"
+                pill
+              >
+                {{ aas.id }}
+              </v-chip>
+            </v-list-item-title>
 
-          <!-- Pfeil rechts -->
-          <template #append>
-            <v-icon>
-              mdi-chevron-right
-            </v-icon>
-          </template>
+            <v-list-item-subtitle>
+              {{ aas.description }}
+            </v-list-item-subtitle>
 
-        </v-list-item>
+            <template #append>
+              <v-icon>mdi-chevron-right</v-icon>
+            </template>
+          </v-list-item>
 
-      </v-list>
-    </v-card>
+        </v-list>
+      </v-card>
+    </template>
+
+    <!-- AAS WITHOUT DPPS -->
+    <template v-if="aasWithoutDpps.length > 0">
+      <div class="section-title text-h5 mb-3">
+        AAS without DPPs
+      </div>
+
+      <v-card elevation="2">
+        <v-list lines="two">
+
+          <v-list-item v-if="loading">
+            <v-list-item-title>
+              Loading AAS...
+            </v-list-item-title>
+          </v-list-item>
+
+          <v-list-item v-else-if="error">
+            <v-list-item-title class="text-error">
+              {{ error }}
+            </v-list-item-title>
+          </v-list-item>
+
+          <v-list-item
+            v-for="aas in aasWithoutDpps"
+            :key="aas.id"
+            class="aas-item"
+            @click="goToAas(aas.id)"
+          >
+            <template #prepend>
+              <v-icon color="grey">
+                mdi-cube-outline
+              </v-icon>
+            </template>
+
+            <v-list-item-title class="d-flex align-center ga-3">
+              <span class="aas-name">{{ aas.name }}</span>
+
+              <v-chip
+                size="small"
+                color="grey"
+                variant="tonal"
+                pill
+              >
+                {{ aas.id }}
+              </v-chip>
+            </v-list-item-title>
+
+            <v-list-item-subtitle>
+              {{ aas.description }}
+            </v-list-item-subtitle>
+
+            <template #append>
+              <v-icon>mdi-chevron-right</v-icon>
+            </template>
+          </v-list-item>
+
+        </v-list>
+      </v-card>
+    </template>
 
   </v-container>
 </template>
@@ -98,79 +141,124 @@ import { useEnvStore } from '@/store/EnvironmentStore'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-/* Router */
 const router = useRouter()
 
-/* Suche */
+/* state */
 const search = ref('')
-
-/* Loading + Error */
 const loading = ref(false)
 const error = ref('')
 
-/* AAS Daten */
-const aasList = ref<
-  {
-    id: string
-    name: string
-    description: string
-  }[]
->([])
+const aasList = ref<any[]>([])
+const aasWithDpp = ref<Set<string>>(new Set())
 
-/* API URL */
-const API_URL = useEnvStore().getEnvAASRepoPath || 'http://localhost:8081/shells'
+/* APIs & DPPs*/
+const AAS_URL = useEnvStore().getEnvAASRepoPath || 'http://localhost:8081/shells'
 
-/* Daten laden */
+const DPP_API = 'https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId'
+
+/* fetch DPP by globalAssetId */
+function encodeProductId(value: string): string {
+  return btoa(value)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
+
+async function fetchDppByGlobalAssetId(
+  globalAssetId: string
+): Promise<boolean> {
+  try {
+    const encodedProductId = encodeProductId(globalAssetId)
+
+    console.log('globalAssetId:', globalAssetId)
+    console.log('encodedProductId:', encodedProductId)
+    const url = `${DPP_API}/${encodedProductId}`
+    console.log('Calling:', url)
+    const res = await fetch(url)
+    console.log('status:', res.status)
+
+    if (!res.ok) {
+      return false
+    }
+
+    const data = await res.json()
+    console.log('DPP response:', data)
+    return data?.status === 'success'
+  } catch (err) {
+    console.error('Failed to fetch DPP:', err)
+    return false
+  }
+}
+
+/* load AAS + DPP check */
 async function fetchAAS() {
   loading.value = true
   error.value = ''
 
   try {
-    const response = await fetch(API_URL)
+    const res = await fetch(AAS_URL)
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch AAS data')
+    if (!res.ok) {
+      throw new Error('Failed to fetch AAS')
     }
 
-    const data = await response.json()
+    const data = await res.json()
 
-    console.log('API RESPONSE:', data)
-
-    /* Falls API result benutzt */
     const aasArray = data.result || data
 
-    aasList.value = aasArray.map((item: any) => ({
-      id: item.id,
+    const mapped = aasArray.map((item: any) => {
+      const globalAssetId =
+        item.assetInformation?.globalAssetId || ''
 
-      // Name:
-      // 1. displayName EN / EN-US
-      // 2. erstes displayName
-      // 3. idShort
-      // 4. fallback
-      name:
-        item.displayName?.find(
-          (d: any) => d.language?.startsWith('en')
-        )?.text
-        ||
-        item.displayName?.[0]?.text
-        ||
-        item.idShort
-        ||
-        'No Name',
+      return {
+        id: item.id,
+        globalAssetId,
+        name:
+          item.displayName?.find((d: any) =>
+            d.language?.startsWith('en')
+          )?.text ||
+          item.displayName?.[0]?.text ||
+          item.idShort ||
+          'No Name',
+        description:
+          item.description?.find((d: any) =>
+            d.language?.startsWith('en')
+          )?.text ||
+          item.description?.[0]?.text ||
+          ' ',
+      }
+    })
 
-      // Description:
-      // 1. description EN
-      // 2. erste description
-      // 3. fallback
-      description:
-        item.description?.find(
-          (d: any) => d.language?.startsWith('en')
-        )?.text
-        ||
-        item.description?.[0]?.text
-        ||
-        ' ',
-    }))
+    aasList.value = mapped
+
+    /* check every AAS for DPP */
+    const results = await Promise.all(
+      mapped.map(async (aas: any) => {
+        if (!aas.globalAssetId) {
+          return {
+            id: aas.id,
+            hasDpp: false,
+          }
+        }
+
+        const hasDpp =
+          await fetchDppByGlobalAssetId(
+            aas.globalAssetId
+          )
+
+        return {
+          id: aas.id,
+          hasDpp,
+        }
+      })
+    )
+
+    /* store all AAS ids with DPP */
+    aasWithDpp.value = new Set(
+      results
+        .filter(r => r.hasDpp)
+        .map(r => r.id)
+    )
 
   } catch (err: any) {
     error.value =
@@ -180,12 +268,11 @@ async function fetchAAS() {
   }
 }
 
-/* Beim Laden ausführen */
 onMounted(() => {
   fetchAAS()
 })
 
-/* Suche */
+/* filter */
 const filteredAas = computed(() => {
   if (!search.value) {
     return aasList.value
@@ -198,8 +285,20 @@ const filteredAas = computed(() => {
   )
 })
 
-/* Navigation zur passenden DPP Detailseite */
-/* ID wird base64-kodiert */
+/* categories */
+const availableDpps = computed(() =>
+  filteredAas.value.filter(a =>
+    aasWithDpp.value.has(a.id)
+  )
+)
+
+const aasWithoutDpps = computed(() =>
+  filteredAas.value.filter(
+    a => !aasWithDpp.value.has(a.id)
+  )
+)
+
+/* navigation */
 function goToAas(id: string) {
   const encodedId = btoa(id)
   router.push(`/dpp/detail/${encodedId}`)
