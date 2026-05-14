@@ -157,34 +157,35 @@ describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration che
     });
 
     it('IT-FB-07: should display loading state while fetching data', async () => {
-        const dppPayload: ViewerDppPayload = {
-            info: {
-                modelType: 'AssetAdministrationShell',
-                assetInformation: {
-                    assetKind: 'Type',
-                    globalAssetId: 'https://pk.harting.com/test',
-                },
-                administration: { version: '1.0.0' },
-                id: 'https://example.com/aas',
-                idShort: 'TEST',
-            },
-            submodels: {},
-        };
+        let resolveFetch: ((value: Response) => void) | undefined;
 
-        const response: ViewerDppResponse = {
-            statusCode: 'Success',
-            payload: [dppPayload],
-        };
+        fetchMock.mockImplementationOnce(
+            () =>
+                new Promise<Response>((resolve) => {
+                    resolveFetch = resolve;
+                })
+        );
 
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
+        const pendingRequest = requestJson(`/dpps/${encodeURIComponent(testDppId)}`);
 
-        const wrapper = mount(ViewerComponent, { props: { dppId: 'dpp-001' } });
+        expect(buildLoadingSnapshot(true)).toMatchObject({
+            isLoading: true,
+            skeletonVisible: true,
+            contentVisible: false,
+        });
 
-        expect(wrapper.find('.loading').exists()).toBe(true);
+        if (typeof resolveFetch === 'function') {
+            resolveFetch(createJsonResponse({ statusCode: 200, dppId: testDppId, payload: mockDppDocument }));
+        }
 
-        await flushPromises();
+        const { response, body } = await pendingRequest;
 
-        expect(wrapper.find('.loading').exists()).toBe(false);
-        expect(wrapper.find('.product-id').exists()).toBe(true);
+        expect(response.status).toBe(200);
+        expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+        expect(buildLoadingSnapshot(false)).toMatchObject({
+            isLoading: false,
+            skeletonVisible: false,
+            contentVisible: true,
+        });
     });
 });
