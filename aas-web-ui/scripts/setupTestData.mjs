@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint no-console: ["error", { allow: ["warn", "error", "log"] }] */
+
 /**
  * Backend Test Data Setup Script
  *
