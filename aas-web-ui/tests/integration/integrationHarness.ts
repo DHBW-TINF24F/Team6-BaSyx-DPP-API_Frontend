@@ -133,11 +133,15 @@ export const mockBasyxList = [
 
 let integrationMockInstalled = false;
 
-function createJsonResponse(status: number, body: unknown): Response {
+function makeJsonResponse(status: number, body: unknown): Response {
     return new Response(body === null ? null : JSON.stringify(body), {
         status,
         headers: body === null ? undefined : { 'Content-Type': 'application/json' },
     });
+}
+
+export function createJsonResponse(body: unknown, status = 200): Response {
+    return makeJsonResponse(status, body);
 }
 
 function createErrorBody(statusCode: number, message: string): Record<string, unknown> {
@@ -230,7 +234,7 @@ function parseBodyProductIds(body: unknown): string[] {
 
 function handleDppByProductId(productId: string): Response {
     if (productId === testProductId || productId === testRegistryProductId) {
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             productId,
             payload: {
@@ -244,15 +248,15 @@ function handleDppByProductId(productId: string): Response {
         });
     }
 
-    return createJsonResponse(404, createErrorBody(404, 'DPP not found for productId'));
+    return makeJsonResponse(404, createErrorBody(404, 'DPP not found for productId'));
 }
 
 function handleDppByProductIdAndDate(productId: string, date: string): Response {
     if (productId !== testProductId) {
-        return createJsonResponse(404, createErrorBody(404, 'DPP not found for productId and date'));
+        return makeJsonResponse(404, createErrorBody(404, 'DPP not found for productId and date'));
     }
 
-    return createJsonResponse(200, {
+    return makeJsonResponse(200, {
         statusCode: 200,
         productId,
         versionDate: date,
@@ -266,10 +270,10 @@ function handleDppByProductIdAndDate(productId: string, date: string): Response 
 
 function handleDppById(dppId: string): Response {
     if (dppId !== testDppId) {
-        return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
+        return makeJsonResponse(404, createErrorBody(404, 'DPP not found'));
     }
 
-    return createJsonResponse(200, {
+    return makeJsonResponse(200, {
         statusCode: 200,
         dppId,
         productId: mockDppDocument.productId,
@@ -279,10 +283,10 @@ function handleDppById(dppId: string): Response {
 
 function handleCollectionByElementId(dppId: string, elementId: string): Response {
     if (dppId !== testDppId || elementId !== testCollectionId) {
-        return createJsonResponse(404, createErrorBody(404, 'Collection not found'));
+        return makeJsonResponse(404, createErrorBody(404, 'Collection not found'));
     }
 
-    return createJsonResponse(200, {
+    return makeJsonResponse(200, {
         statusCode: 200,
         dppId,
         elementId,
@@ -292,10 +296,10 @@ function handleCollectionByElementId(dppId: string, elementId: string): Response
 
 function handleElementByPath(dppId: string, elementPath: string): Response {
     if (dppId !== testDppId || elementPath !== testElementPath) {
-        return createJsonResponse(404, createErrorBody(404, 'Element not found'));
+        return makeJsonResponse(404, createErrorBody(404, 'Element not found'));
     }
 
-    return createJsonResponse(200, {
+    return makeJsonResponse(200, {
         statusCode: 200,
         dppId,
         elementPath,
@@ -311,12 +315,12 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     const body = await readJsonBody(request);
 
     if (method === 'GET' && pathname === '/api/v1/dpp/health') {
-        return createJsonResponse(200, { status: 'UP' });
+        return makeJsonResponse(200, { status: 'UP' });
     }
 
     if (method === 'GET' && pathname === '/api/v1/dpp/list') {
         const limit = Number.parseInt(searchParams.get('limit') || `${mockBasyxList.length}`, 10);
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             payload: mockBasyxList.slice(0, Number.isNaN(limit) ? mockBasyxList.length : limit),
         });
@@ -324,17 +328,17 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
 
     if (method === 'GET' && pathname === '/api/v1/dpp') {
         if (searchParams.has('id')) {
-            return createJsonResponse(400, createErrorBody(400, 'id must be a valid URL'));
+            return makeJsonResponse(400, createErrorBody(400, 'id must be a valid URL'));
         }
 
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             payload: mockDppDocument,
         });
     }
 
     if (method === 'POST' && pathname === '/registerDPP') {
-        return createJsonResponse(201, {
+        return makeJsonResponse(201, {
             statusCode: 201,
             registryIdentifier: testRegistryIdentifier,
             payload: {
@@ -346,7 +350,7 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
 
     if (method === 'POST' && pathname === '/dppsByProductIds') {
         const productIds = parseBodyProductIds(body);
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             payload: productIds.map((productId, index) => ({
                 productId,
@@ -357,7 +361,7 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
 
     if (method === 'POST' && pathname === '/dpps') {
         const payload = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-        return createJsonResponse(201, {
+        return makeJsonResponse(201, {
             statusCode: 201,
             dppID: testDppId,
             payload: {
@@ -376,11 +380,11 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         const elementId = decodeURIComponent(segments[3] || '');
 
         if (dppId !== testDppId) {
-            return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
+            return makeJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
 
         const patch = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             dppId,
             collectionId: elementId,
@@ -397,11 +401,11 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         const elementPath = decodeURIComponent(segments[3] || '');
 
         if (dppId !== testDppId) {
-            return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
+            return makeJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
 
         const patch = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             dppId,
             elementPath,
@@ -415,11 +419,11 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     if (method === 'PATCH' && pathname.startsWith('/dpps/')) {
         const dppId = decodeURIComponent(pathname.split('/')[2] || '');
         if (dppId !== testDppId) {
-            return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
+            return makeJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
 
         const patch = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-        return createJsonResponse(200, {
+        return makeJsonResponse(200, {
             statusCode: 200,
             dppId,
             payload: {
@@ -435,7 +439,7 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     if (method === 'DELETE' && pathname.startsWith('/dpps/')) {
         const dppId = decodeURIComponent(pathname.split('/')[2] || '');
         if (dppId !== testDppId) {
-            return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
+            return makeJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
 
         return new Response(null, { status: 204 });
@@ -471,7 +475,7 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     if (method === 'GET' && pathname.startsWith('/dpp/')) {
         const productId = decodeURIComponent(pathname.split('/')[2] || '');
         if (productId === testProductId) {
-            return createJsonResponse(200, {
+            return makeJsonResponse(200, {
                 statusCode: 200,
                 payload: {
                     ...buildBasyxSnapshot(mockDppDocument),
@@ -480,11 +484,13 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
             });
         }
 
-        return createJsonResponse(404, createErrorBody(404, 'Product DPP not found'));
+        return makeJsonResponse(404, createErrorBody(404, 'Product DPP not found'));
     }
 
-    return createJsonResponse(404, createErrorBody(404, `Unhandled mock request: ${method} ${pathname}`));
+    return makeJsonResponse(404, createErrorBody(404, `Unhandled mock request: ${method} ${pathname}`));
 }
+
+export const fetchMock = vi.fn(mockFetch as typeof fetch);
 
 export function installIntegrationBackendMock(): void {
     if (runRealBackendTests || integrationMockInstalled) {
@@ -492,7 +498,7 @@ export function installIntegrationBackendMock(): void {
     }
 
     integrationMockInstalled = true;
-    vi.stubGlobal('fetch', mockFetch);
+    vi.stubGlobal('fetch', fetchMock);
 }
 
 export async function requestJson(
