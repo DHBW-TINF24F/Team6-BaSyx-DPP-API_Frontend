@@ -11,10 +11,11 @@ import AASEditor from '@/pages/AASEditor.vue';
 import AASSubmodelViewer from '@/pages/AASSubmodelViewer.vue';
 import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
-import DesignSkeletton from '@/pages/DesignSkeletton.vue';
+import DPPListView from '@/pages/DPPListView.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
+import DPPDetailPage from '@/pages/DPPDetailPage.vue';
 import { useAASStore } from '@/store/AASDataStore';
 import { useEnvStore } from '@/store/EnvironmentStore';
 import { useInfrastructureStore } from '@/store/InfrastructureStore';
@@ -68,18 +69,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
         meta: { name: 'AAS Viewer', subtitle: 'Visualize Asset Administration Shells' },
     },
     {
-        path: '/design',
-        name: 'DesignSkeletton',
-        component: DesignSkeletton,
-        meta: { name: 'Design Skeletton', subtitle: 'Design Testing Page' },
-    },
-    {
-        path: '/dpp/list',
-        name: 'DPPListView',
-        component: DPPListView,
-        meta: { name: 'DPP List', subtitle: 'List of DPPs' },
-    },
-    {
         path: '/',
         name: 'Root',
         component: Page404,
@@ -118,6 +107,18 @@ const staticRoutes: Array<RouteRecordRaw> = [
         name: 'About',
         component: About,
         meta: { name: 'About' },
+    },
+    {
+        path: '/dpp/list',
+        name: 'DPPList',
+        component: DPPListView,
+        meta: { name: 'DPP List', subtitle: 'All Digital Product Passports' },
+    },
+    {
+        path: '/dpp/detail/:productId?',
+        name: 'DPPDetailPage',
+        component: DPPDetailPage,
+        meta: { name: 'DPP Detail', subtitle: 'Detail view for DPP' },
     },
     { path: '/404', name: 'NotFound404', component: Page404, meta: { name: 'Page not found | 404' } },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: Page404 },
@@ -228,7 +229,14 @@ export async function createAppRouter(): Promise<Router> {
 
     // Data
     const routesStayOnPages: Array<RouteRecordNameGeneric> = ['About', 'NotFound404'];
-    const routesForMobile: Array<RouteRecordNameGeneric> = ['AASList', 'SubmodelList', 'Visualization'];
+    const routesForMobile: Array<RouteRecordNameGeneric> = [
+        'AASList',
+        'SubmodelList',
+        'Visualization',
+        'DPPList',
+        'DPPDetailPage',
+        'DPPEditor',
+    ];
     const routesForDesktop: Array<RouteRecordNameGeneric> = [
         'AASEditor',
         'AASViewer',
@@ -236,6 +244,9 @@ export async function createAppRouter(): Promise<Router> {
         'SMEditor',
         'SMViewer',
         'Visualization',
+        'DPPList',
+        'DPPDetailPage',
+        'DPPEditor',
     ];
     const routesOnlyMobile: Array<RouteRecordNameGeneric> = routesForMobile.filter(
         (x) => !routesForDesktop.includes(x)
@@ -248,6 +259,7 @@ export async function createAppRouter(): Promise<Router> {
         'AASEditor', // just desktop
         'AASViewer', // just desktop
         'AASSubmodelViewer', // just desktop
+        'DPPDetailPage', // desktop and mobile
 
         'AASList', // just mobile
         'SubmodelList', // just mobile
@@ -771,7 +783,7 @@ export async function createAppRouter(): Promise<Router> {
                 const updatedRoute = { path: to.path, query };
                 return updatedRoute;
             }
-        } else if (!to.query.aas || to.query.aas === '') {
+        } else if ((!to.query.aas || to.query.aas === '') && !['DPPList', 'DPPEditor'].includes(String(to.name))) {
             aasStore.dispatchSelectedAAS({});
         }
 

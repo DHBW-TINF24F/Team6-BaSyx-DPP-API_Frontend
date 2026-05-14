@@ -149,10 +149,12 @@
 </template>
 
 <script lang="ts" setup>
-    import { computed, onMounted, ref } from 'vue';
-    import { useRouter } from 'vue-router';
-    import { useEnvStore } from '@/store/EnvironmentStore';
+import { useEnvStore } from '@/store/EnvironmentStore'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useNavigationStore } from '@/store/NavigationStore'
 
+/* Router */
 const router = useRouter()
 
 /* state */
@@ -309,8 +311,8 @@ const aasWithoutDpps = computed(() =>
 
 /* navigation */
 function goToAas(id: string) {
-  const encodedId = btoa(id)
-  router.push(`/dpp/detail/${encodedId}`)
+  const aasEndpoint = `${API_URL}/${btoa(id)}`
+  router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } })
 }
 </script>
 
