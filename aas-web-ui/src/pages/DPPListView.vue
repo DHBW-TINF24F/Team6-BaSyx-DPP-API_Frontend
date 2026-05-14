@@ -227,7 +227,7 @@
 
     /* navigation */
     function goToAas(id: string) {
-        const aasEndpoint = `${API_URL}/${btoa(id)}`;
+        const aasEndpoint = `${AAS_URL}/${btoa(id)}`;
         router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } });
     }
 </script>
