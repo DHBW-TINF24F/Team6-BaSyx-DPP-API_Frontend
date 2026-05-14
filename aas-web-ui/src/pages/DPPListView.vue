@@ -168,24 +168,21 @@ async function fetchDppByGlobalAssetId(
   globalAssetId: string
 ): Promise<boolean> {
   try {
-    const encodedProductId = encodeProductId(globalAssetId)
+    const encodedProductId =
+      encodeProductId(globalAssetId)
 
-    console.log('globalAssetId:', globalAssetId)
-    console.log('encodedProductId:', encodedProductId)
     const url = `${DPP_API}/${encodedProductId}`
-    console.log('Calling:', url)
+
     const res = await fetch(url)
-    console.log('status:', res.status)
 
     if (!res.ok) {
       return false
     }
 
     const data = await res.json()
-    console.log('DPP response:', data)
+
     return data?.status === 'success'
-  } catch (err) {
-    console.error('Failed to fetch DPP:', err)
+  } catch {
     return false
   }
 }
