@@ -1,6 +1,6 @@
 <template>
     <v-container fluid class="pa-4">
-        <!-- Suchfeld -->
+        <!-- Search -->
         <v-row class="mb-6" justify="center">
             <v-col cols="12" md="6">
                 <v-text-field
@@ -13,139 +13,88 @@
             </v-col>
         </v-row>
 
-    <!-- Search -->
-    <v-row class="mb-6" justify="center">
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="search"
-          prepend-inner-icon="mdi-magnify"
-          placeholder="AAS search..."
-          variant="outlined"
-          density="comfortable"
-          clearable
-        />
-      </v-col>
-    </v-row>
+        <!-- AVAILABLE DPPS -->
+        <template v-if="availableDpps.length > 0">
+            <div class="section-title text-h5 mb-3">Available DPPs</div>
 
-    <!-- AVAILABLE DPPS -->
-    <template v-if="availableDpps.length > 0">
-      <div class="section-title text-h5 mb-3">
-        Available DPPs
-      </div>
+            <v-card elevation="2" class="mb-6">
+                <v-list lines="two">
+                    <v-list-item v-if="loading">
+                        <v-list-item-title> Loading AAS... </v-list-item-title>
+                    </v-list-item>
 
-      <v-card elevation="2" class="mb-6">
-        <v-list lines="two">
+                    <v-list-item v-else-if="error">
+                        <v-list-item-title class="text-error">
+                            {{ error }}
+                        </v-list-item-title>
+                    </v-list-item>
 
-          <v-list-item v-if="loading">
-            <v-list-item-title>
-              Loading AAS...
-            </v-list-item-title>
-          </v-list-item>
+                    <v-list-item v-for="aas in availableDpps" :key="aas.id" class="aas-item" @click="goToAas(aas.id)">
+                        <template #prepend>
+                            <v-icon color="primary"> mdi-package-variant </v-icon>
+                        </template>
 
-          <v-list-item v-else-if="error">
-            <v-list-item-title class="text-error">
-              {{ error }}
-            </v-list-item-title>
-          </v-list-item>
+                        <v-list-item-title class="d-flex align-center ga-3">
+                            <span class="aas-name">{{ aas.name }}</span>
 
-          <v-list-item
-            v-for="aas in availableDpps"
-            :key="aas.id"
-            class="aas-item"
-            @click="goToAas(aas.id)"
-          >
-            <template #prepend>
-              <v-icon color="primary">
-                mdi-package-variant
-              </v-icon>
-            </template>
+                            <v-chip size="small" color="primary" variant="tonal" pill>
+                                {{ aas.id }}
+                            </v-chip>
+                        </v-list-item-title>
 
-            <v-list-item-title class="d-flex align-center ga-3">
-              <span class="aas-name">{{ aas.name }}</span>
+                        <v-list-item-subtitle>
+                            {{ aas.description }}
+                        </v-list-item-subtitle>
 
-              <v-chip
-                size="small"
-                color="primary"
-                variant="tonal"
-                pill
-              >
-                {{ aas.id }}
-              </v-chip>
-            </v-list-item-title>
+                        <template #append>
+                            <v-icon>mdi-chevron-right</v-icon>
+                        </template>
+                    </v-list-item>
+                </v-list>
+            </v-card>
+        </template>
 
-            <v-list-item-subtitle>
-              {{ aas.description }}
-            </v-list-item-subtitle>
+        <!-- AAS WITHOUT DPPS -->
+        <template v-if="aasWithoutDpps.length > 0">
+            <div class="section-title text-h5 mb-3">AAS without DPPs</div>
 
-            <template #append>
-              <v-icon>mdi-chevron-right</v-icon>
-            </template>
-          </v-list-item>
+            <v-card elevation="2">
+                <v-list lines="two">
+                    <v-list-item v-if="loading">
+                        <v-list-item-title> Loading AAS... </v-list-item-title>
+                    </v-list-item>
 
-        </v-list>
-      </v-card>
-    </template>
+                    <v-list-item v-else-if="error">
+                        <v-list-item-title class="text-error">
+                            {{ error }}
+                        </v-list-item-title>
+                    </v-list-item>
 
-    <!-- AAS WITHOUT DPPS -->
-    <template v-if="aasWithoutDpps.length > 0">
-      <div class="section-title text-h5 mb-3">
-        AAS without DPPs
-      </div>
+                    <v-list-item v-for="aas in aasWithoutDpps" :key="aas.id" class="aas-item" @click="goToAas(aas.id)">
+                        <template #prepend>
+                            <v-icon color="grey"> mdi-cube-outline </v-icon>
+                        </template>
 
-      <v-card elevation="2">
-        <v-list lines="two">
+                        <v-list-item-title class="d-flex align-center ga-3">
+                            <span class="aas-name">{{ aas.name }}</span>
 
-          <v-list-item v-if="loading">
-            <v-list-item-title>
-              Loading AAS...
-            </v-list-item-title>
-          </v-list-item>
+                            <v-chip size="small" color="grey" variant="tonal" pill>
+                                {{ aas.id }}
+                            </v-chip>
+                        </v-list-item-title>
 
-          <v-list-item v-else-if="error">
-            <v-list-item-title class="text-error">
-              {{ error }}
-            </v-list-item-title>
-          </v-list-item>
+                        <v-list-item-subtitle>
+                            {{ aas.description }}
+                        </v-list-item-subtitle>
 
-          <v-list-item
-            v-for="aas in aasWithoutDpps"
-            :key="aas.id"
-            class="aas-item"
-            @click="goToAas(aas.id)"
-          >
-            <template #prepend>
-              <v-icon color="grey">
-                mdi-cube-outline
-              </v-icon>
-            </template>
-
-            <v-list-item-title class="d-flex align-center ga-3">
-              <span class="aas-name">{{ aas.name }}</span>
-
-              <v-chip
-                size="small"
-                color="grey"
-                variant="tonal"
-                pill
-              >
-                {{ aas.id }}
-              </v-chip>
-            </v-list-item-title>
-
-            <v-list-item-subtitle>
-              {{ aas.description }}
-            </v-list-item-subtitle>
-
-            <template #append>
-              <v-icon>mdi-chevron-right</v-icon>
-            </template>
-          </v-list-item>
-
-        </v-list>
-      </v-card>
-    </template>
-
-  </v-container>
+                        <template #append>
+                            <v-icon>mdi-chevron-right</v-icon>
+                        </template>
+                    </v-list-item>
+                </v-list>
+            </v-card>
+        </template>
+    </v-container>
 </template>
 
 <script lang="ts" setup>
@@ -154,123 +103,134 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNavigationStore } from '@/store/NavigationStore'
 
+<<<<<<< Updated upstream
 /* Router */
 const router = useRouter()
+=======
+    const router = useRouter();
+>>>>>>> Stashed changes
 
-/* state */
-const search = ref('')
-const loading = ref(false)
-const error = ref('')
+    /* state */
+    const search = ref('');
+    const loading = ref(false);
+    const error = ref('');
 
-const aasList = ref<any[]>([])
-const aasWithDpp = ref<Set<string>>(new Set())
+    const aasList = ref<any[]>([]);
+    const aasWithDpp = ref<Set<string>>(new Set());
 
-/* APIs & DPPs*/
-const AAS_URL = useEnvStore().getEnvAASRepoPath || 'http://localhost:8081/shells'
+    /* APIs & DPPs*/
+    const AAS_URL = useEnvStore().getEnvAASRepoPath || 'http://localhost:8081/shells';
 
-const DPP_API = 'https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId'
+    const DPP_API = 'https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId';
 
-/* fetch DPP by globalAssetId */
-function encodeProductId(value: string): string {
-  return btoa(value)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-}
-
-async function fetchDppByGlobalAssetId(
-  globalAssetId: string
-): Promise<boolean> {
-  try {
-    const encodedProductId =
-      encodeProductId(globalAssetId)
-
-    const url = `${DPP_API}/${encodedProductId}`
-
-    const res = await fetch(url)
-
-    if (!res.ok) {
-      return false
+    /* fetch DPP by globalAssetId */
+    function encodeProductId(value: string): string {
+        return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
-    const data = await res.json()
+    async function fetchDppByGlobalAssetId(globalAssetId: string): Promise<boolean> {
+        try {
+            const encodedProductId = encodeProductId(globalAssetId);
 
-    return data?.status === 'success'
-  } catch {
-    return false
-  }
-}
+            const url = `${DPP_API}/${encodedProductId}`;
 
-/* load AAS + DPP check */
-async function fetchAAS() {
-  loading.value = true
-  error.value = ''
+            const res = await fetch(url);
 
-  try {
-    const res = await fetch(AAS_URL)
+            if (!res.ok) {
+                return false;
+            }
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch AAS')
+            const data = await res.json();
+
+            return data?.status === 'success';
+        } catch {
+            return false;
+        }
     }
 
-    const data = await res.json()
+    /* load AAS + DPP check */
+    async function fetchAAS() {
+        loading.value = true;
+        error.value = '';
 
-    const aasArray = data.result || data
+        try {
+            const res = await fetch(AAS_URL);
 
-    const mapped = aasArray.map((item: any) => {
-      const globalAssetId =
-        item.assetInformation?.globalAssetId || ''
+            if (!res.ok) {
+                throw new Error('Failed to fetch AAS');
+            }
 
-      return {
-        id: item.id,
-        globalAssetId,
-        name:
-          item.displayName?.find((d: any) =>
-            d.language?.startsWith('en')
-          )?.text ||
-          item.displayName?.[0]?.text ||
-          item.idShort ||
-          'No Name',
-        description:
-          item.description?.find((d: any) =>
-            d.language?.startsWith('en')
-          )?.text ||
-          item.description?.[0]?.text ||
-          ' ',
-      }
-    })
+            const data = await res.json();
 
-    aasList.value = mapped
+            const aasArray = data.result || data;
 
-    /* check every AAS for DPP */
-    const results = await Promise.all(
-      mapped.map(async (aas: any) => {
-        if (!aas.globalAssetId) {
-          return {
-            id: aas.id,
-            hasDpp: false,
-          }
+            const mapped = aasArray.map((item: any) => {
+                const globalAssetId = item.assetInformation?.globalAssetId || '';
+
+                return {
+                    id: item.id,
+                    globalAssetId,
+                    name:
+                        item.displayName?.find((d: any) => d.language?.startsWith('en'))?.text ||
+                        item.displayName?.[0]?.text ||
+                        item.idShort ||
+                        'No Name',
+                    description:
+                        item.description?.find((d: any) => d.language?.startsWith('en'))?.text ||
+                        item.description?.[0]?.text ||
+                        ' ',
+                };
+            });
+
+            aasList.value = mapped;
+
+            /* check every AAS for DPP */
+            const results = await Promise.all(
+                mapped.map(async (aas: any) => {
+                    if (!aas.globalAssetId) {
+                        return {
+                            id: aas.id,
+                            hasDpp: false,
+                        };
+                    }
+
+                    const hasDpp = await fetchDppByGlobalAssetId(aas.globalAssetId);
+
+                    return {
+                        id: aas.id,
+                        hasDpp,
+                    };
+                })
+            );
+
+            /* store all AAS ids with DPP */
+            aasWithDpp.value = new Set(results.filter((r) => r.hasDpp).map((r) => r.id));
+        } catch (err: any) {
+            error.value = err.message || 'Unknown error';
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    onMounted(() => {
+        fetchAAS();
+    });
+
+    /* filter */
+    const filteredAas = computed(() => {
+        if (!search.value) {
+            return aasList.value;
         }
 
-        const hasDpp =
-          await fetchDppByGlobalAssetId(
-            aas.globalAssetId
-          )
+        return aasList.value.filter((a) => a.name.toLowerCase().includes(search.value.toLowerCase()));
+    });
 
-        return {
-          id: aas.id,
-          hasDpp,
-        }
-      })
-    )
+    /* categories */
+    const availableDpps = computed(() => filteredAas.value.filter((a) => aasWithDpp.value.has(a.id)));
 
-    /* store all AAS ids with DPP */
-    aasWithDpp.value = new Set(
-      results
-        .filter(r => r.hasDpp)
-        .map(r => r.id)
-    )
+    const aasWithoutDpps = computed(() => filteredAas.value.filter((a) => !aasWithDpp.value.has(a.id)));
 
+<<<<<<< Updated upstream
   } catch (err: any) {
     error.value =
       err.message || 'Unknown error'
@@ -314,6 +274,13 @@ function goToAas(id: string) {
   const aasEndpoint = `${API_URL}/${btoa(id)}`
   router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } })
 }
+=======
+    /* navigation */
+    function goToAas(id: string) {
+        const encodedId = btoa(id);
+        router.push(`/dpp/detail/${encodedId}`);
+    }
+>>>>>>> Stashed changes
 </script>
 
 <style scoped>
