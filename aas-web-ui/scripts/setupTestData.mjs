@@ -101,7 +101,7 @@ async function checkHealth() {
     try {
         const result = await fetchJson('/api/v1/dpp/health');
         if (result.ok && result.data?.status === 'UP') {
-            console.log('[OK] Backend is UP');
+            // console.log('[OK] Backend is UP');
             return true;
         }
 
@@ -218,9 +218,9 @@ async function printSummary(results) {
 
 // Main Execution
 async function main() {
-    console.log('\n' + '='.repeat(60));
-    console.log('Backend Test Data Setup Script');
-    console.log('='.repeat(60));
+    // console.log('\n' + '='.repeat(60));
+    // console.log('Backend Test Data Setup Script');
+    // console.log('='.repeat(60));
 
     const results = {
         health: false,
