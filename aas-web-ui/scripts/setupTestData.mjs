@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-/* eslint no-console: ["error", { allow: ["warn", "error", "log"] }] */
-
 /**
  * Backend Test Data Setup Script
  *
@@ -99,7 +97,7 @@ async function fetchJson(path, method = 'GET', body = null) {
 }
 
 async function checkHealth() {
-    console.log(`\n[INFO] Checking backend health: ${BACKEND_BASE_URL}`);
+    // console.log(`\n[INFO] Checking backend health: ${BACKEND_BASE_URL}`);
     try {
         const result = await fetchJson('/api/v1/dpp/health');
         if (result.ok && result.data?.status === 'UP') {
@@ -116,7 +114,7 @@ async function checkHealth() {
 }
 
 async function createTestDpp() {
-    console.log(`\n[INFO] Creating test DPP: ${TEST_DPP_ID}`);
+    // console.log(`\n[INFO] Creating test DPP: ${TEST_DPP_ID}`);
     const result = await fetchJson('/dpps', 'POST', testDppData);
 
     if (!result.ok) {
@@ -125,7 +123,7 @@ async function createTestDpp() {
     }
 
     if (result.data?.dppID === TEST_DPP_ID) {
-        console.log(`[OK] DPP created: ${result.data.dppID}`);
+        // console.log(`[OK] DPP created: ${result.data.dppID}`);
         return true;
     }
 
@@ -134,7 +132,7 @@ async function createTestDpp() {
 }
 
 async function registerDpp() {
-    console.log(`\n[INFO] Registering DPP in AAS Registry: ${TEST_REGISTRY_ID}`);
+    // console.log(`\n[INFO] Registering DPP in AAS Registry: ${TEST_REGISTRY_ID}`);
     const result = await fetchJson('/registerDPP', 'POST', {
         productId: TEST_PRODUCT_ID,
     });
@@ -145,7 +143,7 @@ async function registerDpp() {
     }
 
     if (result.data?.registryIdentifier === TEST_REGISTRY_ID) {
-        console.log(`[OK] DPP registered: ${result.data.registryIdentifier}`);
+        // console.log(`[OK] DPP registered: ${result.data.registryIdentifier}`);
         return true;
     }
 
@@ -154,7 +152,7 @@ async function registerDpp() {
 }
 
 async function verifyDppByProductId() {
-    console.log(`\n[INFO] Verifying DPP by Product ID: ${TEST_PRODUCT_ID}`);
+    // console.log(`\n[INFO] Verifying DPP by Product ID: ${TEST_PRODUCT_ID}`);
     const result = await fetchJson(`/dppsByProductId/${encodeURIComponent(TEST_PRODUCT_ID)}`);
 
     if (!result.ok) {
@@ -163,7 +161,7 @@ async function verifyDppByProductId() {
     }
 
     if (result.data?.payload?.dppId === TEST_DPP_ID) {
-        console.log(`[OK] DPP found by Product ID: ${result.data.payload.dppId}`);
+        // console.log(`[OK] DPP found by Product ID: ${result.data.payload.dppId}`);
         return true;
     }
 
@@ -172,7 +170,7 @@ async function verifyDppByProductId() {
 }
 
 async function verifyDppById() {
-    console.log(`\n[INFO] Verifying DPP by ID: ${TEST_DPP_ID}`);
+    // console.log(`\n[INFO] Verifying DPP by ID: ${TEST_DPP_ID}`);
     const result = await fetchJson(`/dpps/${encodeURIComponent(TEST_DPP_ID)}`);
 
     if (!result.ok) {
@@ -181,7 +179,7 @@ async function verifyDppById() {
     }
 
     if (result.data?.payload?.productId === TEST_PRODUCT_ID) {
-        console.log(`[OK] DPP verified: ${result.data.payload.productId}`);
+        // console.log(`[OK] DPP verified: ${result.data.payload.productId}`);
         return true;
     }
 
@@ -190,6 +188,7 @@ async function verifyDppById() {
 }
 
 async function printSummary(results) {
+    /*
     console.log('\n' + '='.repeat(60));
     console.log('Setup Summary:');
     console.log('='.repeat(60));
@@ -203,17 +202,18 @@ async function printSummary(results) {
     console.log(`  Register DPP:      ${results.register ? 'PASS' : 'FAIL'}`);
     console.log(`  Verify by ID:      ${results.verifyId ? 'PASS' : 'FAIL'}`);
     console.log(`  Verify by Prod ID: ${results.verifyProdId ? 'PASS' : 'FAIL'}`);
+    */
 
     const allPassed = Object.values(results).every((v) => v === true);
-    console.log('\n' + '='.repeat(60));
+    console.warn('\n' + '='.repeat(60));
     if (allPassed) {
-        console.log('All setup steps completed successfully.');
-        console.log('You can now run: yarn test:integration:real');
+        console.warn('All setup steps completed successfully.');
+        console.warn('You can now run: yarn test:integration:real');
     } else {
-        console.log('Some setup steps failed. Please check the errors above.');
+        console.warn('Some setup steps failed. Please check the errors above.');
         process.exit(1);
     }
-    console.log('='.repeat(60) + '\n');
+    console.warn('='.repeat(60) + '\n');
 }
 
 // Main Execution
