@@ -98,17 +98,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useEnvStore } from '@/store/EnvironmentStore'
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useNavigationStore } from '@/store/NavigationStore'
+    import { useEnvStore } from '@/store/EnvironmentStore';
+    import { ref, computed, onMounted } from 'vue';
+    import { useRouter } from 'vue-router';
+    import { useNavigationStore } from '@/store/NavigationStore';
 
-<<<<<<< Updated upstream
-/* Router */
-const router = useRouter()
-=======
     const router = useRouter();
->>>>>>> Stashed changes
 
     /* state */
     const search = ref('');
@@ -230,57 +225,11 @@ const router = useRouter()
 
     const aasWithoutDpps = computed(() => filteredAas.value.filter((a) => !aasWithDpp.value.has(a.id)));
 
-<<<<<<< Updated upstream
-  } catch (err: any) {
-    error.value =
-      err.message || 'Unknown error'
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchAAS()
-})
-
-/* filter */
-const filteredAas = computed(() => {
-  if (!search.value) {
-    return aasList.value
-  }
-
-  return aasList.value.filter(a =>
-    a.name
-      .toLowerCase()
-      .includes(search.value.toLowerCase())
-  )
-})
-
-/* categories */
-const availableDpps = computed(() =>
-  filteredAas.value.filter(a =>
-    aasWithDpp.value.has(a.id)
-  )
-)
-
-const aasWithoutDpps = computed(() =>
-  filteredAas.value.filter(
-    a => !aasWithDpp.value.has(a.id)
-  )
-)
-
-/* navigation */
-function goToAas(id: string) {
-  const aasEndpoint = `${API_URL}/${btoa(id)}`
-  router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } })
-}
-=======
     /* navigation */
     function goToAas(id: string) {
-        const encodedId = btoa(id);
-        router.push(`/dpp/detail/${encodedId}`);
+        const aasEndpoint = `${API_URL}/${btoa(id)}`;
+        router.push({ name: 'DPPDetailPage', query: { aas: aasEndpoint } });
     }
->>>>>>> Stashed changes
 </script>
 
 <style scoped>
