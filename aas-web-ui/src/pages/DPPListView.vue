@@ -101,7 +101,6 @@
     import { useEnvStore } from '@/store/EnvironmentStore';
     import { ref, computed, onMounted } from 'vue';
     import { useRouter } from 'vue-router';
-    import { useNavigationStore } from '@/store/NavigationStore';
 
     const router = useRouter();
 
