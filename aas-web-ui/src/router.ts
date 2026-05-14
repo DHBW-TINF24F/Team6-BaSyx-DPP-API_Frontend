@@ -25,7 +25,6 @@ import {
     type ModuleRouteManifest,
     type ModuleRouteMeta,
 } from '@/utils/ModuleRouteUtils';
-import DPPListView from './pages/DPPListView.vue';
 
 type ModuleComponentExport = {
     default?: ModuleRouteMeta;
