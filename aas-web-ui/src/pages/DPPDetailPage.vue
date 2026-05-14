@@ -413,7 +413,7 @@ const ValueTree = defineComponent({
 })
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
-function goBack() { router.push({ name: 'DPPListView' }) }
+function goBack() { router.push({ name: 'DPPList' }) }
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadDpp(): Promise<void> {
