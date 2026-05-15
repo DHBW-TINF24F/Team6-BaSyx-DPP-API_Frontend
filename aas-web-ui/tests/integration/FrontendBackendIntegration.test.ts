@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-
 import {
     buildLoadingSnapshot,
     buildViewerSnapshot,
@@ -80,7 +79,9 @@ describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration che
 
                 expect(response.status).toBe(404);
                 expect((body as Record<string, unknown>).statusCode).toBe(404);
-                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe('DPP not found');
+                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe(
+                    'DPP not found'
+                );
             },
         },
         {
@@ -95,21 +96,37 @@ describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration che
             id: 'IT-FB-06',
             description: 'Collections and element lookups should remain addressable from the viewer',
             async run() {
-                const collectionResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/collections/${encodeURIComponent(testCollectionId)}`);
-                const elementResponse = await requestJson(`/dpps/${encodeURIComponent(testDppId)}/elements/${encodeURIComponent(testElementPath)}`);
+                const collectionResponse = await requestJson(
+                    `/dpps/${encodeURIComponent(testDppId)}/collections/${encodeURIComponent(testCollectionId)}`
+                );
+                const elementResponse = await requestJson(
+                    `/dpps/${encodeURIComponent(testDppId)}/elements/${encodeURIComponent(testElementPath)}`
+                );
 
                 expect(collectionResponse.response.status).toBe(200);
                 expect(elementResponse.response.status).toBe(200);
-                expect(((collectionResponse.body as Record<string, unknown>).payload as Record<string, unknown>).items).toHaveLength(3);
-                expect(((elementResponse.body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe('Industrial Motor 3000');
+                expect(
+                    ((collectionResponse.body as Record<string, unknown>).payload as Record<string, unknown>).items
+                ).toHaveLength(3);
+                expect(
+                    ((elementResponse.body as Record<string, unknown>).payload as Record<string, unknown>).value
+                ).toBe('Industrial Motor 3000');
             },
         },
         {
             id: 'IT-FB-07',
             description: 'Loading state should be visible until the backend payload is ready',
             async run() {
-                expect(buildLoadingSnapshot(true)).toMatchObject({ isLoading: true, skeletonVisible: true, contentVisible: false });
-                expect(buildLoadingSnapshot(false)).toMatchObject({ isLoading: false, skeletonVisible: false, contentVisible: true });
+                expect(buildLoadingSnapshot(true)).toMatchObject({
+                    isLoading: true,
+                    skeletonVisible: true,
+                    contentVisible: false,
+                });
+                expect(buildLoadingSnapshot(false)).toMatchObject({
+                    isLoading: false,
+                    skeletonVisible: false,
+                    contentVisible: true,
+                });
             },
         },
     ] as const;

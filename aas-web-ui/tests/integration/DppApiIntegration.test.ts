@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-
 import {
     installIntegrationBackendMock,
     mockCollectionRecord,
@@ -12,8 +11,6 @@ import {
     testElementPath,
     testProductId,
     testRegistryIdentifier,
-    testUnknownDppId,
-    testUnknownProductId,
 } from './integrationHarness';
 
 installIntegrationBackendMock();
@@ -39,7 +36,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
                 expect(response.status).toBe(201);
                 expect((body as Record<string, unknown>).dppID).toBe(testDppId);
                 expect((body as Record<string, unknown>).payload).toBeTruthy();
-                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(testProductId);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(
+                    testProductId
+                );
             },
         },
         {
@@ -51,7 +50,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).dppId).toBe(testDppId);
-                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(testProductId);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(
+                    testProductId
+                );
             },
         },
         {
@@ -72,7 +73,14 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).dppId).toBe(testDppId);
-                expect((((body as Record<string, unknown>).payload as Record<string, unknown>).info as Record<string, unknown>).version).toBe('1.0.1');
+                expect(
+                    (
+                        ((body as Record<string, unknown>).payload as Record<string, unknown>).info as Record<
+                            string,
+                            unknown
+                        >
+                    ).version
+                ).toBe('1.0.1');
             },
         },
         {
@@ -157,7 +165,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).elementId).toBe(testCollectionId);
-                expect(((body as Record<string, unknown>).payload as typeof mockCollectionRecord).items).toHaveLength(3);
+                expect(((body as Record<string, unknown>).payload as typeof mockCollectionRecord).items).toHaveLength(
+                    3
+                );
             },
         },
         {
@@ -169,7 +179,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).elementPath).toBe(testElementPath);
-                expect(((body as Record<string, unknown>).payload as typeof mockElementRecord).value).toBe('Industrial Motor 3000');
+                expect(((body as Record<string, unknown>).payload as typeof mockElementRecord).value).toBe(
+                    'Industrial Motor 3000'
+                );
             },
         },
         {
@@ -188,7 +200,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).collectionId).toBe(testCollectionId);
-                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).name).toBe('Updated Collection');
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).name).toBe(
+                    'Updated Collection'
+                );
             },
         },
         {
@@ -207,7 +221,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(200);
                 expect((body as Record<string, unknown>).elementPath).toBe(testElementPath);
-                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe('Updated Value');
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe(
+                    'Updated Value'
+                );
             },
         },
         {
@@ -231,7 +247,9 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
             verify(response: Response, body: unknown) {
                 expect(response.status).toBe(400);
                 expect((body as Record<string, unknown>).statusCode).toBe(400);
-                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe('id must be a valid URL');
+                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe(
+                    'id must be a valid URL'
+                );
             },
         },
     ] as const;

@@ -216,7 +216,12 @@ function parseBodyProductIds(body: unknown): string[] {
         return body.map((value) => String(value));
     }
 
-    if (body && typeof body === 'object' && 'productIds' in body && Array.isArray((body as { productIds: unknown[] }).productIds)) {
+    if (
+        body &&
+        typeof body === 'object' &&
+        'productIds' in body &&
+        Array.isArray((body as { productIds: unknown[] }).productIds)
+    ) {
         return (body as { productIds: unknown[] }).productIds.map((value) => String(value));
     }
 
@@ -369,11 +374,11 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         const segments = pathname.split('/').filter(Boolean);
         const dppId = decodeURIComponent(segments[1] || '');
         const elementId = decodeURIComponent(segments[3] || '');
-        
+
         if (dppId !== testDppId) {
             return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
-        
+
         const patch = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
         return createJsonResponse(200, {
             statusCode: 200,
@@ -390,11 +395,11 @@ async function mockFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         const segments = pathname.split('/').filter(Boolean);
         const dppId = decodeURIComponent(segments[1] || '');
         const elementPath = decodeURIComponent(segments[3] || '');
-        
+
         if (dppId !== testDppId) {
             return createJsonResponse(404, createErrorBody(404, 'DPP not found'));
         }
-        
+
         const patch = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
         return createJsonResponse(200, {
             statusCode: 200,
@@ -490,7 +495,10 @@ export function installIntegrationBackendMock(): void {
     vi.stubGlobal('fetch', mockFetch);
 }
 
-export async function requestJson(path: string, init: RequestInit = {}): Promise<{ response: Response; body: unknown }> {
+export async function requestJson(
+    path: string,
+    init: RequestInit = {}
+): Promise<{ response: Response; body: unknown }> {
     const response = await fetch(`${backendBaseUrl}${path}`, {
         headers: {
             Accept: 'application/json',
@@ -499,7 +507,7 @@ export async function requestJson(path: string, init: RequestInit = {}): Promise
         ...init,
     });
 
-    let body: unknown = null;
+    let body: unknown;
     try {
         body = await response.json();
     } catch {
