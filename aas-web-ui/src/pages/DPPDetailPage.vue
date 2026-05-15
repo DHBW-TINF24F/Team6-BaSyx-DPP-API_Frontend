@@ -329,7 +329,7 @@ const dppVersions      = ref<DppVersionEntry[]>([])
 /** Index of the currently displayed DPP in the version list */
 const currentVersionIndex = computed(() => {
     if (!dpp.value || dppVersions.value.length === 0) return 0
-    const idx = dppVersions.value.findIndex(v => v.dppId === dpp.value!.dppId)
+    const idx = dppVersions.value.findIndex((v: DppVersionEntry) => v.dppId === dpp.value!.dppId)
     return idx >= 0 ? idx : 0
 })
 
@@ -505,7 +505,7 @@ const ValueTree = defineComponent({
     props: {
         entries: { type: Array as PropType<SubmodelEntry[]>, required: true },
     },
-    setup(props) {
+    setup(props: Readonly<{ entries: SubmodelEntry[] }>) {
         return () => h('div', { class: 'vt-root' }, renderEntries(props.entries, 0))
     },
 })
