@@ -37,9 +37,80 @@
                         <h1 class="dpp-title text-h4 font-weight-bold mb-2">{{ nameFromState }}</h1>
                         <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">DPP-ID: {{ decodeBase64(dpp.dppId) }}</p>
                     </div>
-                    <v-btn class="back-btn" variant="elevated" color="white" prepend-icon="mdi-arrow-left" size="small" elevation="3" @click="goBack">
-                        Zurück
-                    </v-btn>
+                    <div class="d-flex align-center ga-2">
+                        <!-- ── DPP Version Switcher ──────────────────────────────── -->
+                        <v-menu
+                            v-if="dppVersions.length > 1"
+                            :close-on-content-click="true"
+                            location="bottom end"
+                            max-height="360"
+                        >
+                            <template #activator="{ props: menuProps }">
+                                <v-btn
+                                    v-bind="menuProps"
+                                    variant="tonal"
+                                    color="primary"
+                                    size="small"
+                                    class="version-switcher-btn"
+                                >
+                                    <v-icon start size="16">mdi-swap-horizontal</v-icon>
+                                    Version {{ currentVersionIndex + 1 }} / {{ dppVersions.length }}
+                                    <v-icon end size="16">mdi-chevron-down</v-icon>
+                                </v-btn>
+                            </template>
+
+                            <v-card class="version-menu-card" min-width="340" max-width="480">
+                                <div class="version-menu-header pa-3 pb-2">
+                                    <div class="d-flex align-center ga-2">
+                                        <v-icon size="18" color="primary">mdi-history</v-icon>
+                                        <span class="text-subtitle-2 font-weight-bold" style="color: rgb(var(--v-theme-primary))">
+                                            DPP-Versionen ({{ dppVersions.length }})
+                                        </span>
+                                    </div>
+                                </div>
+                                <v-divider />
+                                <v-list
+                                    density="compact"
+                                    class="version-list pa-1"
+                                    nav
+                                >
+                                    <v-list-item
+                                        v-for="(version, vIdx) in dppVersions"
+                                        :key="version.dppId"
+                                        :active="version.dppId === dpp.dppId"
+                                        :class="{ 'version-item--active': version.dppId === dpp.dppId }"
+                                        class="version-item rounded-lg mb-1"
+                                        @click="switchDpp(version.dppId)"
+                                    >
+                                        <template #prepend>
+                                            <div class="version-index-badge mr-3" :class="{ 'version-index-badge--active': version.dppId === dpp.dppId }">
+                                                {{ vIdx + 1 }}
+                                            </div>
+                                        </template>
+
+                                        <v-list-item-title class="version-item-title text-break">
+                                            {{ shortenDppId(version.dppId) }}
+                                        </v-list-item-title>
+                                        <v-list-item-subtitle class="version-item-sub">
+                                            {{ decodeBase64(version.dppId) }}
+                                        </v-list-item-subtitle>
+
+                                        <template #append>
+                                            <v-icon
+                                                v-if="version.dppId === dpp.dppId"
+                                                size="18"
+                                                color="primary"
+                                            >mdi-check-circle</v-icon>
+                                        </template>
+                                    </v-list-item>
+                                </v-list>
+                            </v-card>
+                        </v-menu>
+
+                        <v-btn class="back-btn" variant="elevated" color="white" prepend-icon="mdi-arrow-left" size="small" elevation="3" @click="goBack">
+                            Zurück
+                        </v-btn>
+                    </div>
                 </div>
 
                 <v-divider class="border-primary my-6" thickness="2" />
@@ -59,7 +130,7 @@
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">Erstellt am</div>
-                        <div class="meta-value text-break">{{ new Date(dpp.createdAt * 1) || '-' }}</div>
+                        <div class="meta-value text-break">{{ formatTimestamp(dpp.createdAt) }}</div>
                     </v-col>
                 </v-row>
             </v-card>
@@ -180,6 +251,15 @@ interface DppApiResponse {
     result?: { message?: Array<{ text?: string }> }
 }
 
+interface DppVersionEntry {
+    dppId: string
+}
+
+interface DppVersionsResponse {
+    status?: string
+    results?: Record<string, DppVersionEntry[]>
+}
+
 // ─── Store & Router ───────────────────────────────────────────────────────────
 const aasStore = useAASStore()
 const router   = useRouter()
@@ -202,11 +282,11 @@ const nameFromState = computed(() => {
         || ''
 })
 
-// ─── Base64 decode helper ─────────────────────────────────────────────────────
-/**
- * Safely decode a Base64-encoded string (with or without trailing `=` padding).
- * Falls back to the original value if decoding fails or the input is empty.
- */
+// ─── Base64 helpers ───────────────────────────────────────────────────────────
+function encodeBase64(value: string): string {
+    try { return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '') } catch { return value }
+}
+
 function decodeBase64(encoded: string | undefined | null): string {
     if (!encoded) return '-'
     try {
@@ -217,15 +297,25 @@ function decodeBase64(encoded: string | undefined | null): string {
         else if (remainder === 3) standard += '='
 
         return decodeURIComponent(
-            atob(standard)
-                .split('')
-                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
+            atob(standard).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
         )
-    } catch {
-        // Not valid Base64 – return as-is
-        return encoded
-    }
+    } catch { return encoded }
+}
+
+/** Show only the last meaningful segment of a decoded DPP-ID */
+function shortenDppId(encoded: string): string {
+    const decoded = decodeBase64(encoded)
+    if (decoded === encoded) return encoded  // decoding failed, show raw
+    // e.g. "https://team6.dpp/batterypass/proto-001177304914011" → "proto-001177304914011"
+    const parts = decoded.replace(/\/+$/, '').split('/')
+    return parts[parts.length - 1] || decoded
+}
+
+function formatTimestamp(ts: string | number | undefined | null): string {
+    if (!ts) return '-'
+    const n = typeof ts === 'string' ? Number(ts) : ts
+    if (isNaN(n as number)) return String(ts)
+    try { return new Date(n).toLocaleString('de-DE') } catch { return String(ts) }
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -234,6 +324,16 @@ const loading          = ref(true)
 const errorMessage     = ref('')
 const submodelsValues  = ref<Record<string, SubmodelEntry[]> | null>(null)
 const openPanels       = ref<string[]>([])
+
+/** All DPP versions for the current product */
+const dppVersions      = ref<DppVersionEntry[]>([])
+
+/** Index of the currently displayed DPP in the version list */
+const currentVersionIndex = computed(() => {
+    if (!dpp.value || dppVersions.value.length === 0) return 0
+    const idx = dppVersions.value.findIndex((v: DppVersionEntry) => v.dppId === dpp.value!.dppId)
+    return idx >= 0 ? idx : 0
+})
 
 // ─── Panel toggle (sidebar) ───────────────────────────────────────────────────
 function togglePanel(name: string) {
@@ -407,7 +507,7 @@ const ValueTree = defineComponent({
     props: {
         entries: { type: Array as PropType<SubmodelEntry[]>, required: true },
     },
-    setup(props) {
+    setup(props: Readonly<{ entries: SubmodelEntry[] }>) {
         return () => h('div', { class: 'vt-root' }, renderEntries(props.entries, 0))
     },
 })
@@ -416,14 +516,84 @@ const ValueTree = defineComponent({
 function goBack() { router.push({ name: 'DPPList' }) }
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
-async function loadDpp(): Promise<void> {
-    const currentProductId = btoa(productId.value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    if (!currentProductId) {
-        dpp.value = null
-        errorMessage.value = ''
-        loading.value = false
-        return
+
+/** Load the list of all DPP versions for the current product via POST /dppsByProductIds */
+async function loadDppVersions(): Promise<void> {
+    if (!productId.value) { dppVersions.value = []; return }
+
+    const b64ProductId = encodeBase64(productId.value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    try {
+        const response = await fetch('https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductIds', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            // ⬇️ Body ist ein reines Array, kein Objekt mit "productIds"
+            body: JSON.stringify([b64ProductId]),
+        })
+
+        if (!response.ok) {
+            dppVersions.value = []
+            return
+        }
+
+        const data = (await response.json()) as DppVersionsResponse
+
+        if (data?.status?.toLowerCase() === 'success' && data.results) {
+            // results ist ein Map: b64ProductId → Array<{ dppId }>
+            const entries =
+                data.results[b64ProductId] ||
+                Object.values(data.results)[0] ||
+                []
+            dppVersions.value = entries
+        } else {
+            dppVersions.value = []
+        }
+    } catch {
+        dppVersions.value = []
     }
+}
+
+/** Load a specific DPP by its (already base64-encoded) dppId */
+async function loadDppByDppId(dppId: string): Promise<void> {
+    loading.value = true; errorMessage.value = ''; openPanels.value = []
+
+    try {
+        const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dpps/${dppId}`)
+        const data = (await response.json()) as DppApiResponse
+
+        let resolvedDpp: Dpp | undefined
+        let resolvedSV:  Record<string, unknown[]> | undefined
+
+        if (data?.status && String(data.status).toLowerCase() === 'success' && data.dpp) {
+            resolvedDpp = data.dpp; resolvedSV = data.submodels_values
+        } else if (data?.statusCode && data.payload?.dpp) {
+            resolvedDpp = data.payload.dpp; resolvedSV = data.payload.submodels_values ?? data.submodels_values
+        } else if ((data as any)?.dpp) {
+            resolvedDpp = (data as any).dpp; resolvedSV = (data as any).submodels_values
+        }
+
+        if (!resolvedDpp) {
+            dpp.value = null
+            errorMessage.value = data.message?.[0]?.text || data.result?.message?.[0]?.text || 'DPP konnte nicht geladen werden.'
+            return
+        }
+
+        dpp.value = resolvedDpp
+        submodelsValues.value = normalizeSubmodelsValues((resolvedSV as Record<string, unknown>) ?? null)
+    } catch (error) {
+        dpp.value = null
+        errorMessage.value = error instanceof Error ? error.message : 'DPP konnte nicht geladen werden.'
+    } finally {
+        loading.value = false
+    }
+}
+
+/** Initial load: fetch default DPP by productId (the first / latest one) */
+async function loadDpp(): Promise<void> {
+    const currentProductId = encodeBase64(productId.value)
+    if (!currentProductId) { dpp.value = null; errorMessage.value = ''; loading.value = false; return }
 
     loading.value = true; errorMessage.value = ''; openPanels.value = []
 
@@ -459,13 +629,26 @@ async function loadDpp(): Promise<void> {
     }
 }
 
+/** Switch to a different DPP version */
+async function switchDpp(dppId: string): Promise<void> {
+    if (dpp.value && dpp.value.dppId === dppId) return  // already showing this one
+    await loadDppByDppId(dppId)
+}
+
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => { void loadDpp() })
-watch(productId, () => { void loadDpp() })
+onMounted(async () => {
+    await loadDpp()
+    await loadDppVersions()
+})
+
+watch(productId, async () => {
+    await loadDpp()
+    await loadDppVersions()
+})
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
-     SCOPED – template elements (hero card, sidebar, panels shell)
+     SCOPED – template elements
 ════════════════════════════════════════════════════════════════════════════ -->
 <style scoped>
 .dpp-detail-container { max-width: 1200px; margin: 0 auto; }
@@ -477,13 +660,77 @@ watch(productId, () => { void loadDpp() })
 .meta-label     { color: rgb(var(--v-theme-primary)); font-size: .75rem; font-weight: 600; letter-spacing: .08em; margin-bottom: 4px; text-transform: uppercase; }
 .meta-value     { color: rgb(var(--v-theme-titleText)); font-weight: 500; }
 
-/* Sidebar */
+/* ── Version switcher button ─────────────────────────────────────────────── */
+.version-switcher-btn {
+    text-transform: none !important;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+/* ── Version menu ────────────────────────────────────────────────────────── */
+.version-menu-card {
+    border: 1px solid rgba(var(--v-theme-primary), .15);
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.version-menu-header {
+    background-color: rgba(var(--v-theme-primary), .06);
+}
+
+.version-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.version-item {
+    transition: background-color .12s ease;
+    border: 1px solid transparent;
+    min-height: 52px;
+}
+
+.version-item--active {
+    background-color: rgba(var(--v-theme-primary), .08) !important;
+    border-color: rgba(var(--v-theme-primary), .2);
+}
+
+.version-index-badge {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-size: .75rem; font-weight: 700;
+    background-color: rgba(var(--v-border-color), .1);
+    color: rgba(var(--v-theme-on-surface), .5);
+}
+
+.version-index-badge--active {
+    background-color: rgba(var(--v-theme-primary), .15);
+    color: rgb(var(--v-theme-primary));
+}
+
+.version-item-title {
+    font-size: .8125rem !important;
+    font-weight: 600 !important;
+    color: rgb(var(--v-theme-titleText));
+    line-height: 1.3;
+}
+
+.version-item-sub {
+    font-size: .7rem !important;
+    opacity: .6;
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
 .sidebar-card          { background-color: rgb(var(--v-theme-card)); border-radius: 12px; position: sticky; top: 16px; }
 .sidebar-submodel-chip { display: flex; align-items: center; padding: 6px 10px; border-radius: 8px; font-size: .8125rem; font-weight: 500; cursor: pointer; color: rgb(var(--v-theme-titleText)); transition: background-color .15s, color .15s; user-select: none; }
 .sidebar-submodel-chip:hover   { background-color: rgba(var(--v-theme-primary), .08); }
 .sidebar-submodel-chip--active { background-color: rgba(var(--v-theme-primary), .12); color: rgb(var(--v-theme-primary)); font-weight: 600; }
 
-/* Expansion panels */
+/* ── Expansion panels ─────────────────────────────────────────────────────── */
 .submodel-panels              { border-radius: 10px; overflow: hidden; border: 1px solid rgba(var(--v-border-color), .12); }
 .submodel-panel               { border-bottom: 1px solid rgba(var(--v-border-color), .1); }
 .submodel-panel:last-child    { border-bottom: none; }
@@ -499,74 +746,32 @@ watch(productId, () => { void loadDpp() })
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
      NON-SCOPED – ValueTree render-function output
-     All selectors nested under `.vt-root` to avoid global leaks.
 ════════════════════════════════════════════════════════════════════════════ -->
 <style>
-/* ── Root ─────────────────────────────────────────────────────────────────── */
-.vt-root {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
+.vt-root { display: flex; flex-direction: column; gap: 2px; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   LEAF PROPERTY ROW
-══════════════════════════════════════════════════════════════════════════ */
 .vt-prop {
-    display: grid;
-    grid-template-columns: 3px 20px minmax(110px, 28%) 1fr;
-    column-gap: 10px;
-    align-items: center;
-    min-height: 34px;
-    padding: 7px 10px 7px 0;
-    border-bottom: 1px solid rgba(var(--v-border-color), .06);
-    border-radius: 6px;
-    transition: background-color .12s;
+    display: grid; grid-template-columns: 3px 20px minmax(110px, 28%) 1fr;
+    column-gap: 10px; align-items: center; min-height: 34px;
+    padding: 7px 10px 7px 0; border-bottom: 1px solid rgba(var(--v-border-color), .06);
+    border-radius: 6px; transition: background-color .12s;
 }
-.vt-prop:hover      { background-color: rgba(var(--v-theme-primary), .035); }
-.vt-prop--last      { border-bottom: none; }
+.vt-prop:hover  { background-color: rgba(var(--v-theme-primary), .035); }
+.vt-prop--last  { border-bottom: none; }
+.vt-prop-bar    { width: 3px; align-self: stretch; min-height: 20px; border-radius: 2px; background: rgb(var(--v-theme-primary)); opacity: .3; }
+.vt-prop-icon   { font-size: 14px; color: rgb(var(--v-theme-primary)); opacity: .6; justify-self: center; }
+.vt-prop-key    { font-size: .8rem; font-weight: 600; color: rgb(var(--v-theme-primary)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vt-prop-val    { font-size: .8375rem; color: rgb(var(--v-theme-titleText)); word-break: break-word; opacity: .88; }
+.vt-link        { color: rgb(var(--v-theme-primary)); text-decoration: none; font-weight: 500; word-break: break-all; }
+.vt-link:hover  { text-decoration: underline; }
 
-.vt-prop-bar {
-    width: 3px; align-self: stretch; min-height: 20px;
-    border-radius: 2px; background: rgb(var(--v-theme-primary)); opacity: .3;
-}
-.vt-prop-icon {
-    font-size: 14px; color: rgb(var(--v-theme-primary)); opacity: .6; justify-self: center;
-}
-.vt-prop-key {
-    font-size: .8rem; font-weight: 600; color: rgb(var(--v-theme-primary));
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.vt-prop-val {
-    font-size: .8375rem; color: rgb(var(--v-theme-titleText)); word-break: break-word; opacity: .88;
-}
-
-.vt-link { color: rgb(var(--v-theme-primary)); text-decoration: none; font-weight: 500; word-break: break-all; }
-.vt-link:hover { text-decoration: underline; }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   COLLECTION / GROUP
-══════════════════════════════════════════════════════════════════════════ */
-.vt-group {
-    border-radius: 8px; border: 1px solid rgba(var(--v-theme-primary), .12);
-    overflow: hidden; margin-top: 4px; margin-bottom: 4px;
-}
+.vt-group       { border-radius: 8px; border: 1px solid rgba(var(--v-theme-primary), .12); overflow: hidden; margin-top: 4px; margin-bottom: 4px; }
 .vt-group--last { margin-bottom: 0; }
-
-.vt-group-head {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; background-color: rgba(var(--v-theme-primary), .07);
-}
+.vt-group-head  { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background-color: rgba(var(--v-theme-primary), .07); }
 .vt-group-icon  { font-size: 15px; color: rgb(var(--v-theme-primary)); opacity: .8; flex-shrink: 0; }
 .vt-group-label { font-size: .825rem; font-weight: 700; color: rgb(var(--v-theme-primary)); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vt-group-count { font-size: .675rem; font-weight: 700; color: rgb(var(--v-theme-primary)); background: rgba(var(--v-theme-primary), .12); border-radius: 10px; padding: 1px 7px; flex-shrink: 0; line-height: 1.4; }
-
-.vt-group-body {
-    padding: 6px 10px 8px 14px;
-    border-left: 2px solid rgba(var(--v-theme-primary), .18);
-}
-
-/* Nested groups: progressively subtler headers */
-.vt-group-body .vt-group-head                  { background-color: rgba(var(--v-theme-primary), .045); }
-.vt-group-body .vt-group-body .vt-group-head   { background-color: rgba(var(--v-theme-primary), .03); }
+.vt-group-body  { padding: 6px 10px 8px 14px; border-left: 2px solid rgba(var(--v-theme-primary), .18); }
+.vt-group-body .vt-group-head                { background-color: rgba(var(--v-theme-primary), .045); }
+.vt-group-body .vt-group-body .vt-group-head { background-color: rgba(var(--v-theme-primary), .03); }
 </style>
