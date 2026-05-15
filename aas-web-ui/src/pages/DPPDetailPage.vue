@@ -210,14 +210,14 @@ const nameFromState = computed(() => {
 function decodeBase64(encoded: string | undefined | null): string {
     if (!encoded) return '-'
     try {
-        // Re-add padding that may have been stripped (`=`)
-        let padded = encoded
-        const remainder = padded.length % 4
-        if (remainder === 2) padded += '=='
-        else if (remainder === 3) padded += '='
+        // Reverse URL-safe Base64 substitutions, then re-add stripped padding
+        let standard = encoded.replace(/-/g, '+').replace(/_/g, '/')
+        const remainder = standard.length % 4
+        if (remainder === 2) standard += '=='
+        else if (remainder === 3) standard += '='
 
         return decodeURIComponent(
-            atob(padded)
+            atob(standard)
                 .split('')
                 .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
                 .join('')
