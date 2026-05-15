@@ -11,11 +11,10 @@ import AASEditor from '@/pages/AASEditor.vue';
 import AASSubmodelViewer from '@/pages/AASSubmodelViewer.vue';
 import AASViewer from '@/pages/AASViewer.vue';
 import About from '@/pages/About.vue';
+import DesignSkeletton from '@/pages/DesignSkeletton.vue';
 import Page404 from '@/pages/Page404.vue';
 import SMEditor from '@/pages/SMEditor.vue';
 import SMViewer from '@/pages/SMViewer.vue';
-import DesignSkeletton from '@/pages/DesignSkeletton.vue';
-import DPPListView from './pages/DPPListView.vue';  
 import { useAASStore } from '@/store/AASDataStore';
 import { useEnvStore } from '@/store/EnvironmentStore';
 import { useInfrastructureStore } from '@/store/InfrastructureStore';
@@ -25,6 +24,7 @@ import {
     type ModuleRouteManifest,
     type ModuleRouteMeta,
 } from '@/utils/ModuleRouteUtils';
+import DPPListView from './pages/DPPListView.vue';
 
 type ModuleComponentExport = {
     default?: ModuleRouteMeta;
@@ -122,7 +122,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
     { path: '/404', name: 'NotFound404', component: Page404, meta: { name: 'Page not found | 404' } },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: Page404 },
 ];
-
 
 // Function to generate routes from modules
 const generateModuleRoutes = async (): Promise<Array<RouteRecordRaw>> => {

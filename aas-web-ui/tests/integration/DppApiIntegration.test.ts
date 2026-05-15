@@ -15,8 +15,20 @@ import {
 
 installIntegrationBackendMock();
 
+type ApiRequest = {
+    path: string;
+    init?: RequestInit;
+};
+
+type ApiCase = {
+    id: string;
+    description: string;
+    request: ApiRequest;
+    verify(response: Response, body: unknown): void;
+};
+
 describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => {
-    const apiCases = [
+    const apiCases: ApiCase[] = [
         {
             id: 'IT-API-01',
             description: 'CreateDPP should create a new DPP document',
@@ -252,7 +264,7 @@ describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => 
                 );
             },
         },
-    ] as const;
+    ];
 
     it.each(apiCases)('$id: $description', async ({ request, verify }) => {
         const { response, body } = await requestJson(request.path, request.init);

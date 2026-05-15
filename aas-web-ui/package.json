@@ -14,7 +14,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:check": "eslint ./",
-    "lint:fix": "eslint --fix ./",
+    "lint:fix": "eslint --fix --quiet ./",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:integration": "vitest run tests/integration",
