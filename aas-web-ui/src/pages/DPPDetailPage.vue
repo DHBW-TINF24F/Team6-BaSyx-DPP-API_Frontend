@@ -417,7 +417,7 @@ function goBack() { router.push({ name: 'DPPList' }) }
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadDpp(): Promise<void> {
-    const currentProductId = btoa(productId.value).replace(/=/g, '')
+    const currentProductId = btoa(productId.value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
     if (!currentProductId) {
         dpp.value = null
         errorMessage.value = ''
