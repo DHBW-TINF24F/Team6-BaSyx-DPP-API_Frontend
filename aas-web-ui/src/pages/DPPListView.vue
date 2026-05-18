@@ -107,6 +107,8 @@
 
             const data = await response.json();
 
+            console.log('API RESPONSE:', data);
+
             /* Falls API result benutzt */
             const aasArray = data.result || data;
 
@@ -155,9 +157,10 @@
     });
 
     /* Navigation zur passenden DPP Detailseite */
-    /* Navigation */
+    /* ID wird base64-kodiert */
     function goToAas(id: string) {
-        router.push(`/dpp/detail/${id}`);
+        const encodedId = btoa(id);
+        router.push(`/dpp/detail/${encodedId}`);
     }
 </script>
 

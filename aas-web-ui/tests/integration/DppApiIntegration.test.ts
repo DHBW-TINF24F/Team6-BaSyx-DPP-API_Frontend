@@ -1,136 +1,99 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import {
+    installIntegrationBackendMock,
+    mockCollectionRecord,
+    mockDppDocument,
+    mockElementRecord,
+    requestJson,
+    testCollectionId,
+    testDate,
+    testDppId,
+    testElementPath,
+    testProductId,
+    testRegistryIdentifier,
+} from './integrationHarness';
 
-// ========== Type Definitions ==========
-type StatusCode =
-    | 'Success'
-    | 'SuccessCreated'
-    | 'SuccessAccepted'
-    | 'SuccessNoContent'
-    | 'ClientErrorBadRequest'
-    | 'ClientNotAuthorized'
-    | 'ClientForbidden'
-    | 'ClientMethodNotAllowed'
-    | 'ClientErrorResourceNotFound'
-    | 'ClientResourceConflict'
-    | 'ServerInternalError'
-    | 'ServerErrorBadGateway';
+installIntegrationBackendMock();
 
-type ErrorMessage = {
-    messageType: 'Info' | 'Warning' | 'Error' | 'Exception';
-    text: string;
-    code?: number;
-    correlationId?: string;
-    timestamp?: string;
+type ApiRequest = {
+    path: string;
+    init?: RequestInit;
 };
 
-type SuccessResponse<T> = {
-    statusCode: StatusCode;
-    payload: T[];
-};
-
-type CreatedResponse = {
-    statusCode: 'SuccessCreated';
-    dppID: string;
-};
-
-type RegistryResponse = {
-    statusCode: StatusCode;
-    registryIdentifier: string;
-};
-
-type DeleteResponse = {
-    statusCode: StatusCode;
-};
-
-type ErrorResponse = {
-    statusCode: StatusCode;
-    message: ErrorMessage;
-};
-
-type DppInfo = {
-    modelType: 'AssetAdministrationShell';
-    assetInformation: {
-        assetKind: 'Type';
-        defaultThumbnail?: {
-            contentType: string;
-            path: string;
-        };
-        globalAssetId: string;
-    };
-    administration: {
-        creator?: {
-            keys: Array<{
-                type: string;
-                value: string;
-            }>;
-            type: string;
-        };
-        version: string;
-    };
+type ApiCase = {
     id: string;
-    description?: Array<{
-        language: string;
-        text: string;
-    }>;
-    displayName?: Array<{
-        language: string;
-        text: string;
-    }>;
-    idShort: string;
+    description: string;
+    request: ApiRequest;
+    verify(response: Response, body: unknown): void;
 };
 
-type SubmodelReference = {
-    value: string;
-    reference: string;
-};
-
-type DppPayload = {
-    info: DppInfo;
-    submodels: Record<string, SubmodelReference[]>;
-};
-
-type DppIdentifiersPayload = {
-    productId: string;
-    dpps: Array<{ dppId: string }>;
-};
-
-type CreateDppInput = {
-    info: DppInfo;
-    submodels: Record<string, SubmodelReference[]>;
-};
-
-type JsonResponse<T> = {
-    ok: boolean;
-    status: number;
-    json: () => Promise<T>;
-};
-
-function createJsonResponse<T>(payload: T, status = 200): JsonResponse<T> {
-    return {
-        ok: status >= 200 && status < 300,
-        status,
-        json: async () => payload,
-    };
-}
-
-function createDppApiClient(baseUrl = '/api/dpps') {
-    return {
-        async createDpp(payload: CreateDppInput) {
-            const response = await fetch(baseUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            return response.json();
+describe('DppApiIntegration.test.ts; STR-aligned prepared DPP API tests', () => {
+    const apiCases: ApiCase[] = [
+        {
+            id: 'IT-API-01',
+            description: 'CreateDPP should create a new DPP document',
+            request: {
+                path: '/dpps',
+                init: {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productId: testProductId,
+                        info: mockDppDocument.info,
+                        submodels: mockDppDocument.submodels,
+                    }),
+                },
+            },
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(201);
+                expect((body as Record<string, unknown>).dppID).toBe(testDppId);
+                expect((body as Record<string, unknown>).payload).toBeTruthy();
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(
+                    testProductId
+                );
+            },
         },
-        async readDppById(dppId: string) {
-            const response = await fetch(`${baseUrl}/${dppId}`);
-            return response.json();
+        {
+            id: 'IT-API-02',
+            description: 'ReadDPPById should return the requested DPP',
+            request: {
+                path: `/dpps/${encodeURIComponent(testDppId)}`,
+            },
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).productId).toBe(
+                    testProductId
+                );
+            },
         },
-        async readDppByProductId(productId: string) {
-            const response = await fetch(`/api/dppsbyProductId/${productId}`);
-            return response.json();
+        {
+            id: 'IT-API-03',
+            description: 'UpdateDPP should patch the DPP info section',
+            request: {
+                path: `/dpps/${encodeURIComponent(testDppId)}`,
+                init: {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        info: {
+                            version: '1.0.1',
+                        },
+                    }),
+                },
+            },
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+                expect(
+                    (
+                        ((body as Record<string, unknown>).payload as Record<string, unknown>).info as Record<
+                            string,
+                            unknown
+                        >
+                    ).version
+                ).toBe('1.0.1');
+            },
         },
         async readDppVersionByProductIdAndDate(productId: string, date: string) {
             const response = await fetch(`/api/dppsbyProductIdAndDate/${productId}?date=${encodeURIComponent(date)}`);
@@ -170,34 +133,33 @@ function createDppApiClient(baseUrl = '/api/dpps') {
 
             return response.json();
         },
-        async readDataElementCollection(dppId: string, elementId: string) {
-            const response = await fetch(`${baseUrl}/${dppId}/collections/${elementId}`);
-            return response.json();
+        {
+            id: 'IT-API-09',
+            description: 'ReadCollectionsByElementId should return collection entries',
+            request: {
+                path: `/dpps/${encodeURIComponent(testDppId)}/collections/${encodeURIComponent(testCollectionId)}`,
+            },
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).elementId).toBe(testCollectionId);
+                expect(((body as Record<string, unknown>).payload as typeof mockCollectionRecord).items).toHaveLength(
+                    3
+                );
+            },
         },
-        async readDataElement(dppId: string, elementPath: string) {
-            const response = await fetch(`${baseUrl}/${dppId}/elements/${elementPath}`);
-            return response.json();
-        },
-        async updateDataElementCollection(dppId: string, elementId: string, payload: unknown) {
-            const response = await fetch(`${baseUrl}/${dppId}/collections/${elementId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            return response.json();
-        },
-        async updateDataElement(dppId: string, elementPath: string, payload: unknown) {
-            const response = await fetch(`${baseUrl}/${dppId}/elements/${elementPath}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            return response.json();
-        },
-        async getRawResponse(url: string) {
-            return fetch(url);
+        {
+            id: 'IT-API-10',
+            description: 'ReadElementsByPath should return the addressed element value',
+            request: {
+                path: `/dpps/${encodeURIComponent(testDppId)}/elements/${encodeURIComponent(testElementPath)}`,
+            },
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).elementPath).toBe(testElementPath);
+                expect(((body as Record<string, unknown>).payload as typeof mockElementRecord).value).toBe(
+                    'Industrial Motor 3000'
+                );
+            },
         },
     };
 }
@@ -238,13 +200,12 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
                 ],
                 idShort: 'HARTING_AAS_ZSN1',
             },
-            submodels: {
-                Nameplate: [
-                    {
-                        value: 'https://dpp40.harting.com/shells/ZSN1/submodels/Nameplate/2/0',
-                        reference: 'https://admin-shell.io/zvei/nameplate/2/0/Nameplate',
-                    },
-                ],
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).collectionId).toBe(testCollectionId);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).name).toBe(
+                    'Updated Collection'
+                );
             },
         };
 
@@ -279,13 +240,12 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
                 id: 'https://dpp40.harting.com/shells/ZSN1',
                 idShort: 'HARTING_AAS_ZSN1',
             },
-            submodels: {
-                Nameplate: [
-                    {
-                        value: 'https://dpp40.harting.com/shells/ZSN1/submodels/Nameplate/3/0',
-                        reference: 'https://admin-shell.io/zvei/nameplate/3/0/Nameplate',
-                    },
-                ],
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(200);
+                expect((body as Record<string, unknown>).elementPath).toBe(testElementPath);
+                expect(((body as Record<string, unknown>).payload as Record<string, unknown>).value).toBe(
+                    'Updated Value'
+                );
             },
         };
 
@@ -396,195 +356,15 @@ describe('DppApiIntegration.test.ts; API tests mapped to DIN EN 18222 DPP-Data-O
                 id: 'https://dpp40.harting.com/shells/updated',
                 idShort: 'UPDATED_AAS',
             },
-            submodels: {},
-        };
-
-        const response: SuccessResponse<DppPayload> = {
-            statusCode: 'Success',
-            payload: [
-                {
-                    ...updatePayload,
-                    info: updatePayload.info!,
-                    submodels: updatePayload.submodels || {},
-                },
-            ],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.updateDppById('dpp-001', updatePayload);
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatePayload),
-        });
-        expect(result.statusCode).toBe('Success');
-    });
-
-    // ========== DeleteDPPById Tests ==========
-    it('IT-API-07: DeleteDPPById - should DELETE /dpps/{dppId} and return statusCode only', async () => {
-        const response: DeleteResponse = {
-            statusCode: 'Success',
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.deleteDppById('dpp-001');
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001', {
-            method: 'DELETE',
-        });
-        expect(result.statusCode).toBe('Success');
-        expect(result.payload).toBeUndefined();
-    });
-
-    // ========== PostNewDPPToRegistry Tests ==========
-    it('IT-API-08: PostNewDPPToRegistry - should POST to /registerDPP and return registryIdentifier', async () => {
-        const registryPayload = { dppId: 'dpp-001', aasId: 'aas-dpp-001' };
-        const response: RegistryResponse = {
-            statusCode: 'SuccessCreated',
-            registryIdentifier: 'registry-entry-001',
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response, 201));
-
-        const result = await apiClient.registerDpp(registryPayload);
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/registerDPP', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(registryPayload),
-        });
-        expect(result.statusCode).toBe('SuccessCreated');
-        expect(result.registryIdentifier).toBe('registry-entry-001');
-    });
-
-    // ========== ReadDataElementCollection Tests ==========
-    it('IT-API-09: ReadDataElementCollection - should GET /dpps/{dppId}/collections/{elementId}', async () => {
-        const collectionPayload = {
-            ProductArticleNumberOfManufacturer: '09 30 024 0301',
-            ManufacturerName: [{ de: 'HARTING Electric Stiftung & Co. KG' }],
-        };
-
-        const response: SuccessResponse<typeof collectionPayload> = {
-            statusCode: 'Success',
-            payload: [collectionPayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.readDataElementCollection('dpp-001', 'Nameplate');
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001/collections/Nameplate');
-        expect(result.statusCode).toBe('Success');
-        expect(result.payload[0].ManufacturerName).toBeDefined();
-    });
-
-    // ========== ReadDataElement Tests ==========
-    it('IT-API-10: ReadDataElement - should GET /dpps/{dppId}/elements/{elementPath}', async () => {
-        const elementPayload = {
-            value: 'HARTING Electric Stiftung & Co. KG',
-        };
-
-        const response: SuccessResponse<typeof elementPayload> = {
-            statusCode: 'Success',
-            payload: [elementPayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.readDataElement('dpp-001', 'Nameplate.ManufacturerName');
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001/elements/Nameplate.ManufacturerName');
-        expect(result.statusCode).toBe('Success');
-        expect(result.payload[0].value).toBe('HARTING Electric Stiftung & Co. KG');
-    });
-
-    // ========== UpdateDataElementCollection Tests ==========
-    it('IT-API-11: UpdateDataElementCollection - should PATCH /dpps/{dppId}/collections/{elementId}', async () => {
-        const updatePayload = {
-            ManufacturerName: [{ de: 'Updated Manufacturer Name' }],
-        };
-
-        const response: SuccessResponse<typeof updatePayload> = {
-            statusCode: 'Success',
-            payload: [updatePayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.updateDataElementCollection('dpp-001', 'Nameplate', updatePayload);
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001/collections/Nameplate', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatePayload),
-        });
-        expect(result.statusCode).toBe('Success');
-    });
-
-    // ========== UpdateDataElement Tests ==========
-    it('IT-API-12: UpdateDataElement - should PATCH /dpps/{dppId}/elements/{elementPath}', async () => {
-        const updatePayload = {
-            value: 'New Manufacturer Value',
-        };
-
-        const response: SuccessResponse<typeof updatePayload> = {
-            statusCode: 'Success',
-            payload: [updatePayload],
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(response));
-
-        const result = await apiClient.updateDataElement('dpp-001', 'Nameplate.ManufacturerName', updatePayload);
-
-        expect(fetchMock).toHaveBeenCalledWith('/api/dpps/dpp-001/elements/Nameplate.ManufacturerName', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatePayload),
-        });
-        expect(result.statusCode).toBe('Success');
-    });
-
-    // ========== Error Handling Tests ==========
-    it('IT-API-13: should handle ClientErrorBadRequest errors with proper error message structure', async () => {
-        const errorResponse: ErrorResponse = {
-            statusCode: 'ClientErrorBadRequest',
-            message: {
-                messageType: 'Error',
-                text: 'Invalid DPP structure',
-                code: 400,
-                correlationId: 'corr-123',
-                timestamp: '2025-03-27T10:00:00Z',
+            verify(response: Response, body: unknown) {
+                expect(response.status).toBe(400);
+                expect((body as Record<string, unknown>).statusCode).toBe(400);
+                expect(((body as Record<string, unknown>).errorMessage as Record<string, unknown>).message).toBe(
+                    'id must be a valid URL'
+                );
             },
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(errorResponse, 400));
-
-        const response = await apiClient.getRawResponse('/api/dpps/invalid');
-        const error = await response.json();
-
-        expect(response.ok).toBe(false);
-        expect(response.status).toBe(400);
-        expect(error.statusCode).toBe('ClientErrorBadRequest');
-        expect(error.message.messageType).toBe('Error');
-    });
-
-    it('IT-API-14: should handle ClientErrorResourceNotFound errors', async () => {
-        const errorResponse: ErrorResponse = {
-            statusCode: 'ClientErrorResourceNotFound',
-            message: {
-                messageType: 'Error',
-                text: 'DPP not found',
-                code: 404,
-            },
-        };
-
-        fetchMock.mockResolvedValueOnce(createJsonResponse(errorResponse, 404));
-
-        const response = await apiClient.getRawResponse('/api/dpps/non-existent');
-        const error = await response.json();
+        },
+    ];
 
         expect(response.ok).toBe(false);
         expect(response.status).toBe(404);

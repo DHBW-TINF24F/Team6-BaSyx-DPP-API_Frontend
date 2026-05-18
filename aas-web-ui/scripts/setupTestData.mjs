@@ -23,6 +23,10 @@ const NAMEPLATE_SEMANTIC_ID = 'https://admin-shell.io/idta/Nameplate/1/0';
 const TECHNICAL_DATA_SEMANTIC_ID = 'https://admin-shell.io/idta/TechnicalData/1/0';
 const CARBON_FOOTPRINT_SEMANTIC_ID = 'https://admin-shell.io/idta/CarbonFootprint/1/0';
 
+function logInfo(message) {
+    process.stdout.write(`${message}\n`);
+}
+
 // Test Data Templates
 const testDppData = {
     productId: TEST_PRODUCT_ID,
@@ -77,6 +81,7 @@ async function fetchJson(path, method = 'GET', body = null) {
     try {
         const response = await fetch(url, options);
         let data = null;
+
         try {
             data = await response.json();
         } catch {
@@ -97,11 +102,12 @@ async function fetchJson(path, method = 'GET', body = null) {
 }
 
 async function checkHealth() {
-    // console.log(`\n[INFO] Checking backend health: ${BACKEND_BASE_URL}`);
+    logInfo(`\n[INFO] Checking backend health: ${BACKEND_BASE_URL}`);
+
     try {
         const result = await fetchJson('/api/v1/dpp/health');
         if (result.ok && result.data?.status === 'UP') {
-            // console.log('[OK] Backend is UP');
+            logInfo('[OK] Backend is UP');
             return true;
         }
 
@@ -114,7 +120,7 @@ async function checkHealth() {
 }
 
 async function createTestDpp() {
-    // console.log(`\n[INFO] Creating test DPP: ${TEST_DPP_ID}`);
+    logInfo(`\n[INFO] Creating test DPP: ${TEST_DPP_ID}`);
     const result = await fetchJson('/dpps', 'POST', testDppData);
 
     if (!result.ok) {
@@ -123,7 +129,7 @@ async function createTestDpp() {
     }
 
     if (result.data?.dppID === TEST_DPP_ID) {
-        // console.log(`[OK] DPP created: ${result.data.dppID}`);
+        logInfo(`[OK] DPP created: ${result.data.dppID}`);
         return true;
     }
 
@@ -132,7 +138,7 @@ async function createTestDpp() {
 }
 
 async function registerDpp() {
-    // console.log(`\n[INFO] Registering DPP in AAS Registry: ${TEST_REGISTRY_ID}`);
+    logInfo(`\n[INFO] Registering DPP in AAS Registry: ${TEST_REGISTRY_ID}`);
     const result = await fetchJson('/registerDPP', 'POST', {
         productId: TEST_PRODUCT_ID,
     });
@@ -143,7 +149,7 @@ async function registerDpp() {
     }
 
     if (result.data?.registryIdentifier === TEST_REGISTRY_ID) {
-        // console.log(`[OK] DPP registered: ${result.data.registryIdentifier}`);
+        logInfo(`[OK] DPP registered: ${result.data.registryIdentifier}`);
         return true;
     }
 
@@ -152,7 +158,7 @@ async function registerDpp() {
 }
 
 async function verifyDppByProductId() {
-    // console.log(`\n[INFO] Verifying DPP by Product ID: ${TEST_PRODUCT_ID}`);
+    logInfo(`\n[INFO] Verifying DPP by Product ID: ${TEST_PRODUCT_ID}`);
     const result = await fetchJson(`/dppsByProductId/${encodeURIComponent(TEST_PRODUCT_ID)}`);
 
     if (!result.ok) {
@@ -161,7 +167,7 @@ async function verifyDppByProductId() {
     }
 
     if (result.data?.payload?.dppId === TEST_DPP_ID) {
-        // console.log(`[OK] DPP found by Product ID: ${result.data.payload.dppId}`);
+        logInfo(`[OK] DPP found by Product ID: ${result.data.payload.dppId}`);
         return true;
     }
 
@@ -170,7 +176,7 @@ async function verifyDppByProductId() {
 }
 
 async function verifyDppById() {
-    // console.log(`\n[INFO] Verifying DPP by ID: ${TEST_DPP_ID}`);
+    logInfo(`\n[INFO] Verifying DPP by ID: ${TEST_DPP_ID}`);
     const result = await fetchJson(`/dpps/${encodeURIComponent(TEST_DPP_ID)}`);
 
     if (!result.ok) {
@@ -179,7 +185,7 @@ async function verifyDppById() {
     }
 
     if (result.data?.payload?.productId === TEST_PRODUCT_ID) {
-        // console.log(`[OK] DPP verified: ${result.data.payload.productId}`);
+        logInfo(`[OK] DPP verified: ${result.data.payload.productId}`);
         return true;
     }
 
@@ -188,39 +194,35 @@ async function verifyDppById() {
 }
 
 async function printSummary(results) {
-    /*
-    console.log('\n' + '='.repeat(60));
-    console.log('Setup Summary:');
-    console.log('='.repeat(60));
-    console.log(`Backend URL:        ${BACKEND_BASE_URL}`);
-    console.log(`Test DPP ID:        ${TEST_DPP_ID}`);
-    console.log(`Test Product ID:    ${TEST_PRODUCT_ID}`);
-    console.log(`Test Registry ID:   ${TEST_REGISTRY_ID}`);
-    console.log(`\nResults:`);
-    console.log(`  Health Check:      ${results.health ? 'PASS' : 'FAIL'}`);
-    console.log(`  Create DPP:        ${results.create ? 'PASS' : 'FAIL'}`);
-    console.log(`  Register DPP:      ${results.register ? 'PASS' : 'FAIL'}`);
-    console.log(`  Verify by ID:      ${results.verifyId ? 'PASS' : 'FAIL'}`);
-    console.log(`  Verify by Prod ID: ${results.verifyProdId ? 'PASS' : 'FAIL'}`);
-    */
+    logInfo('\n' + '='.repeat(60));
+    logInfo('Setup Summary:');
+    logInfo('='.repeat(60));
+    logInfo(`Backend URL:        ${BACKEND_BASE_URL}`);
+    logInfo(`Test DPP ID:        ${TEST_DPP_ID}`);
+    logInfo(`Test Product ID:    ${TEST_PRODUCT_ID}`);
+    logInfo(`Test Registry ID:   ${TEST_REGISTRY_ID}`);
+    logInfo('\nResults:');
+    logInfo(`  Health Check:      ${results.health ? 'PASS' : 'FAIL'}`);
+    logInfo(`  Create DPP:        ${results.create ? 'PASS' : 'FAIL'}`);
+    logInfo(`  Register DPP:      ${results.register ? 'PASS' : 'FAIL'}`);
+    logInfo(`  Verify by ID:      ${results.verifyId ? 'PASS' : 'FAIL'}`);
+    logInfo(`  Verify by Prod ID: ${results.verifyProdId ? 'PASS' : 'FAIL'}`);
+    logInfo('='.repeat(60) + '\n');
 
-    const allPassed = Object.values(results).every((v) => v === true);
-    console.warn('\n' + '='.repeat(60));
-    if (allPassed) {
-        console.warn('All setup steps completed successfully.');
-        console.warn('You can now run: yarn test:integration:real');
+    if (results.health && results.create && results.register && results.verifyId && results.verifyProdId) {
+        logInfo('All setup steps completed successfully.');
+        logInfo('You can now run: yarn test:integration:real');
     } else {
-        console.warn('Some setup steps failed. Please check the errors above.');
-        process.exit(1);
+        logInfo('Some setup steps failed. Please check the errors above.');
     }
-    console.warn('='.repeat(60) + '\n');
+
+    logInfo('='.repeat(60) + '\n');
 }
 
-// Main Execution
 async function main() {
-    // console.log('\n' + '='.repeat(60));
-    // console.log('Backend Test Data Setup Script');
-    // console.log('='.repeat(60));
+    logInfo('\n' + '='.repeat(60));
+    logInfo('Backend Test Data Setup Script');
+    logInfo('='.repeat(60));
 
     const results = {
         health: false,
@@ -231,25 +233,16 @@ async function main() {
     };
 
     try {
-        // Step 1: Health Check
         results.health = await checkHealth();
         if (!results.health) {
             throw new Error('Backend is not reachable');
         }
 
-        // Step 2: Create Test DPP
         results.create = await createTestDpp();
-
-        // Step 3: Register DPP
         results.register = await registerDpp();
-
-        // Step 4: Verify by ID
         results.verifyId = await verifyDppById();
-
-        // Step 5: Verify by Product ID
         results.verifyProdId = await verifyDppByProductId();
 
-        // Print Summary
         await printSummary(results);
     } catch (error) {
         console.error('\n[ERROR] Setup failed:', error.message);
