@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
     buildLoadingSnapshot,
     buildViewerSnapshot,
+    createJsonResponse,
     displayValue,
+    fetchMock,
     installIntegrationBackendMock,
     mockDppDocument,
     mockDppDocumentMissingFields,
@@ -133,5 +135,57 @@ describe('FrontendBackendIntegration.test.ts; STR-aligned viewer integration che
 
     it.each(frontendCases)('$id: $description', async ({ run }) => {
         await run();
+    });
+
+    it('IT-FB-06: should handle ClientErrorBadRequest for invalid requests', async () => {
+        const errorResponse = {
+            statusCode: 'ClientErrorBadRequest',
+            message: {
+                messageType: 'Error' as const,
+                text: 'Invalid request format',
+                code: 400,
+            },
+        };
+
+        fetchMock.mockResolvedValueOnce(createJsonResponse(errorResponse, 400));
+
+        const response = await fetch('/api/dpps/invalid');
+        const result = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(result.statusCode).toBe('ClientErrorBadRequest');
+    });
+
+    it('IT-FB-07: should display loading state while fetching data', async () => {
+        let resolveFetch: ((value: Response) => void) | undefined;
+
+        fetchMock.mockImplementationOnce(
+            () =>
+                new Promise<Response>((resolve) => {
+                    resolveFetch = resolve;
+                })
+        );
+
+        const pendingRequest = requestJson(`/dpps/${encodeURIComponent(testDppId)}`);
+
+        expect(buildLoadingSnapshot(true)).toMatchObject({
+            isLoading: true,
+            skeletonVisible: true,
+            contentVisible: false,
+        });
+
+        if (typeof resolveFetch === 'function') {
+            resolveFetch(createJsonResponse({ statusCode: 200, dppId: testDppId, payload: mockDppDocument }));
+        }
+
+        const { response, body } = await pendingRequest;
+
+        expect(response.status).toBe(200);
+        expect((body as Record<string, unknown>).dppId).toBe(testDppId);
+        expect(buildLoadingSnapshot(false)).toMatchObject({
+            isLoading: false,
+            skeletonVisible: false,
+            contentVisible: true,
+        });
     });
 });

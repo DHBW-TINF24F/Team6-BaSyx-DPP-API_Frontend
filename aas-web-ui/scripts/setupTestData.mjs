@@ -18,6 +18,7 @@ const BACKEND_BASE_URL = process.argv[2] || process.env.DPP_BACKEND_BASE_URL || 
 const TEST_DPP_ID = 'urn:uuid:test-dpp-1';
 const TEST_PRODUCT_ID = 'urn:uuid:prod-123';
 const TEST_REGISTRY_ID = 'aas-registry://dpps/test-dpp-1';
+
 const NAMEPLATE_SEMANTIC_ID = 'https://admin-shell.io/idta/Nameplate/1/0';
 const TECHNICAL_DATA_SEMANTIC_ID = 'https://admin-shell.io/idta/TechnicalData/1/0';
 const CARBON_FOOTPRINT_SEMANTIC_ID = 'https://admin-shell.io/idta/CarbonFootprint/1/0';
