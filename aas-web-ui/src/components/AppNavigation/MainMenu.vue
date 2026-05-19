@@ -159,7 +159,7 @@
                             :to="dppRegistryTarget"
                             @click="closeMenu">
                             <template #prepend>
-                                <v-avatar color="surface-light" icon="mdi-pencil" rounded>
+                                <v-avatar color="surface-light" icon="mdi-database" rounded>
                                     <v-icon color="medium-emphasis" />
                                 </v-avatar>
                             </template>
