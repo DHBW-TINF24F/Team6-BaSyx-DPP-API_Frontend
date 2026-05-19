@@ -2,11 +2,7 @@
     <v-container fluid class="pa-0">
         <v-card class="pa-2" border rounded="lg" color="navigationMenu" :min-width="620">
             <v-container>
-                <v-sheet
-                    class="overflow-hidden mx-auto mb-4"
-                    :elevation="2"
-                    rounded="lg"
-                    min-width="450">
+                <v-sheet class="overflow-hidden mx-auto mb-4" :elevation="2" rounded="lg" min-width="450">
                     <v-tabs v-model="currentTab" color="primary" grow>
                         <v-tab value="aas" class="text-none" text="AAS" />
 
