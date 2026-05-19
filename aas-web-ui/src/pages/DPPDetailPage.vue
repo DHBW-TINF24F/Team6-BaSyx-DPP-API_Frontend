@@ -20,10 +20,10 @@
         <template v-else-if="!dpp">
             <div class="text-center mt-12">
                 <v-icon size="64" color="grey">mdi-alert-circle-outline</v-icon>
-                <p class="text-h6 text-grey mt-4">Kein DPP mit der Product-ID „{{ productId }}" gefunden.</p>
+                <p class="text-h6 text-grey mt-4">No DPP found with Product ID "{{ productId }}".</p>
                 <p v-if="errorMessage" class="text-body-2 text-grey mt-2">{{ errorMessage }}</p>
                 <v-btn variant="text" color="primary" class="mt-4" prepend-icon="mdi-arrow-left" @click="goBack">
-                    Zurück zur Übersicht
+                    Back to Overview
                 </v-btn>
             </div>
         </template>
@@ -60,7 +60,7 @@
                                     <div class="d-flex align-center ga-2">
                                         <v-icon size="18" color="primary">mdi-history</v-icon>
                                         <span class="text-subtitle-2 font-weight-bold" style="color: rgb(var(--v-theme-primary))">
-                                            DPP-Versionen ({{ dppVersions.length }})
+                                            DPP Versions ({{ dppVersions.length }})
                                         </span>
                                     </div>
                                 </div>
@@ -89,7 +89,7 @@
                             </v-card>
                         </v-menu>
                         <v-btn class="back-btn" variant="elevated" color="white" prepend-icon="mdi-arrow-left" size="small" elevation="3" @click="goBack">
-                            Zurück
+                            Back
                         </v-btn>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                     <v-col cols="12" sm="6" md="3">
                         <div class="d-flex align-center ga-1 mb-1">
                             <div class="meta-label mb-0">Product ID</div>
-                            <v-tooltip :text="copiedKey === 'productId' ? 'Kopiert!' : 'Kopieren'" location="top">
+                            <v-tooltip :text="copiedKey === 'productId' ? 'Copied!' : 'Copy'" location="top">
                                 <template #activator="{ props: tt }">
                                     <v-btn v-bind="tt" :icon="copiedKey === 'productId' ? 'mdi-check' : 'mdi-content-copy'" size="x-small" variant="text" :color="copiedKey === 'productId' ? 'success' : 'grey'" @click="copyToClipboard(decodeBase64(dpp.productId), 'productId')" />
                                 </template>
@@ -112,7 +112,7 @@
                     <v-col cols="12" sm="6" md="3">
                         <div class="d-flex align-center ga-1 mb-1">
                             <div class="meta-label mb-0">DPP ID</div>
-                            <v-tooltip :text="copiedKey === 'dppId' ? 'Kopiert!' : 'Kopieren'" location="top">
+                            <v-tooltip :text="copiedKey === 'dppId' ? 'Copied!' : 'Copy'" location="top">
                                 <template #activator="{ props: tt }">
                                     <v-btn v-bind="tt" :icon="copiedKey === 'dppId' ? 'mdi-check' : 'mdi-content-copy'" size="x-small" variant="text" :color="copiedKey === 'dppId' ? 'success' : 'grey'" @click="copyToClipboard(decodeBase64(dpp.dppId), 'dppId')" />
                                 </template>
@@ -125,7 +125,7 @@
                         <div class="meta-value text-break">{{ dpp.version || '-' }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
-                        <div class="meta-label">Erstellt am</div>
+                        <div class="meta-label">Created on</div>
                         <div class="meta-value text-break">{{ formatTimestamp(dpp.createdAt) }}</div>
                     </v-col>
                 </v-row>
@@ -138,30 +138,30 @@
                     </div>
                     <v-row dense>
                         <v-col v-if="namePlateBanner.manufacturer !== '-'" cols="12" sm="6" md="4">
-                            <div class="meta-label">Hersteller</div>
+                            <div class="meta-label">Manufacturer</div>
                             <div class="meta-value text-break">{{ namePlateBanner.manufacturer }}</div>
                         </v-col>
                         <v-col v-if="namePlateBanner.product !== '-'" cols="12" sm="6" md="4">
-                            <div class="meta-label">Produktbezeichnung</div>
+                            <div class="meta-label">Product Name</div>
                             <div class="meta-value text-break">{{ namePlateBanner.product }}</div>
                         </v-col>
                         <v-col v-if="namePlateBanner.family !== '-'" cols="12" sm="6" md="4">
-                            <div class="meta-label">Produktfamilie</div>
+                            <div class="meta-label">Product Family</div>
                             <div class="meta-value text-break">{{ namePlateBanner.family }}</div>
                         </v-col>
                         <v-col v-if="namePlateBanner.serial !== '-'" cols="12" sm="6" md="4">
-                            <div class="meta-label">Seriennummer</div>
+                            <div class="meta-label">Serial Number</div>
                             <div class="meta-value text-break">{{ namePlateBanner.serial }}</div>
                         </v-col>
                         <v-col v-if="namePlateBanner.year !== '-'" cols="12" sm="6" md="4">
-                            <div class="meta-label">Baujahr</div>
+                            <div class="meta-label">Year of Construction</div>
                             <div class="meta-value text-break">{{ namePlateBanner.year }}</div>
                         </v-col>
                     </v-row>
                     <template v-if="namePlateBanner.street !== '-' || namePlateBanner.city !== '-'">
                         <div class="np-banner-label mt-4 mb-2">
                             <v-icon size="14" color="primary" class="mr-1">mdi-map-marker-outline</v-icon>
-                            Kontaktadresse
+                            Contact Address
                         </div>
                         <div class="meta-value">
                             <span v-if="namePlateBanner.street !== '-'">{{ namePlateBanner.street }}, </span>
@@ -172,7 +172,7 @@
                     <template v-if="namePlateBanner.markings.length > 0">
                         <div class="np-banner-label mt-4 mb-2">
                             <v-icon size="14" color="primary" class="mr-1">mdi-certificate-outline</v-icon>
-                            Kennzeichnungen
+                            Markings
                         </div>
                         <div class="d-flex flex-wrap ga-1">
                             <v-chip v-for="mark in namePlateBanner.markings" :key="mark" size="small" variant="tonal" color="primary">{{ mark }}</v-chip>
@@ -234,13 +234,13 @@
                                 </div>
                             </div>
                             <v-alert v-else type="info" variant="tonal" density="compact" class="mt-1">
-                                Keine Values für dieses Submodel verfügbar.
+                                No values available for this submodel.
                             </v-alert>
                         </div>
                     </template>
 
                     <v-alert v-else type="info" variant="tonal" class="mt-2">
-                        Für dieses DPP sind keine Submodels hinterlegt.
+                        No submodels stored for this DPP.
                     </v-alert>
                 </v-col>
 
@@ -359,7 +359,7 @@ function formatTimestamp(ts: string | number | undefined | null): string {
     if (!ts) return '-'
     const n = typeof ts === 'string' ? Number(ts) : ts
     if (isNaN(n as number)) return String(ts)
-    try { return new Date(n).toLocaleString('de-DE') } catch { return String(ts) }
+    try { return new Date(n).toLocaleString('en-US') } catch { return String(ts) }
 }
 
 // ─── Submodel icons ───────────────────────────────────────────────────────────
@@ -535,14 +535,14 @@ function childEntries(entry: SubmodelEntry | undefined): SubmodelEntry[] {
 
 // ─── Generic Value Tree (fallback) ───────────────────────────────────────────
 function getEntryLabel(entry: SubmodelEntry, index?: number): string {
-    const base = String(entry.idShort || entry.modelType || 'Eintrag')
+    const base = String(entry.idShort || entry.modelType || 'Entry')
     const cleaned = base
         .replace(/SubmodelElementCollection$/i, '')
         .replace(/SubmodelElementList$/i, '')
         .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
         .replace(/_/g, ' ')
         .trim()
-    return cleaned || base || `Eintrag_${index ?? 0}`
+    return cleaned || base || `Entry_${index ?? 0}`
 }
 
 function isLikelyLink(value: string): boolean {
@@ -667,7 +667,7 @@ const MaterialCompositionView = defineComponent({
             })
 
             const total = substances.reduce((s, x) => s + x.pct, 0)
-            const rest  = total < 100 ? [{ name: 'Sonstige', pct: 100 - total, weight: '-', cas: '-' }] : []
+            const rest  = total < 100 ? [{ name: 'Others', pct: 100 - total, weight: '-', cas: '-' }] : []
             const allSlices = [...substances, ...rest]
 
             const pieSvg = buildPieSlices(allSlices)
@@ -682,7 +682,7 @@ const MaterialCompositionView = defineComponent({
                 h('div', { class: 'mc-layout' }, [
                     // Pie chart
                     h('div', { class: 'mc-chart-wrap' }, [
-                        h('div', { class: 'mc-chart-title' }, 'Zusammensetzung'),
+                        h('div', { class: 'mc-chart-title' }, 'Composition'),
                         h('div', { innerHTML: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="mc-pie">${pieSvg}</svg>`, class: 'mc-pie-container' }),
                         h('div', { class: 'mc-legend' },
                             allSlices.map((s, i) =>
@@ -696,10 +696,10 @@ const MaterialCompositionView = defineComponent({
 
                     // Substances table
                     h('div', { class: 'mc-table-wrap' }, [
-                        h('div', { class: 'mc-chart-title' }, 'Substanzen'),
+                        h('div', { class: 'mc-chart-title' }, 'Substances'),
                         h('table', { class: 'mc-table' }, [
                             h('thead', {}, h('tr', {}, [
-                                h('th', {}, 'Substanz'), h('th', {}, 'Gew. (g)'), h('th', {}, 'Anteil'), h('th', {}, 'CAS-Nr.')
+                                h('th', {}, 'Substance'), h('th', {}, 'Weight (g)'), h('th', {}, 'Share'), h('th', {}, 'CAS No.')
                             ])),
                             h('tbody', {},
                                 substances.map((s, i) =>
@@ -725,7 +725,7 @@ const MaterialCompositionView = defineComponent({
                         critRaw.length > 0 ? h('div', { class: 'mc-crm-section' }, [
                             h('div', { class: 'mc-crm-title' }, [
                                 h('i', { class: 'mdi mdi-alert-circle-outline mc-crm-icon' }),
-                                'Kritische Rohstoffe (%)',
+                                'Critical Raw Materials (%)',
                             ]),
                             h('div', { class: 'mc-crm-grid' },
                                 critRaw.map(cr => {
@@ -753,10 +753,10 @@ const HandoverDocumentationView = defineComponent({
     props: { entries: { type: Array as PropType<SubmodelEntry[]>, required: true } },
     setup(props) {
         const docCategories: Array<{ key: string; label: string; icon: string; color: string }> = [
-            { key: 'AssemblyInstructions',   label: 'Montageanleitung',   icon: 'mdi-wrench',          color: '#1976D2' },
-            { key: 'OperatingInstructions',  label: 'Bedienungsanleitung',icon: 'mdi-book-open-variant',color: '#388E3C' },
-            { key: 'MaintenanceInstructions',label: 'Wartungshandbuch',   icon: 'mdi-tools',           color: '#F57C00' },
-            { key: 'SafetyInstructions',     label: 'Sicherheitshinweise',icon: 'mdi-shield-alert',    color: '#D32F2F' },
+            { key: 'AssemblyInstructions',   label: 'Assembly Instructions',   icon: 'mdi-wrench',          color: '#1976D2' },
+            { key: 'OperatingInstructions',  label: 'Operating Instructions',  icon: 'mdi-book-open-variant',color: '#388E3C' },
+            { key: 'MaintenanceInstructions',label: 'Maintenance Manual',       icon: 'mdi-tools',           color: '#F57C00' },
+            { key: 'SafetyInstructions',     label: 'Safety Instructions',      icon: 'mdi-shield-alert',    color: '#D32F2F' },
         ]
 
         function getFileLinks(entries: SubmodelEntry[], categoryKey: string): string[] {
@@ -779,11 +779,11 @@ const HandoverDocumentationView = defineComponent({
             const docChildren = childEntries(docRoot)
 
             const metaRows = [
-                { label: 'Hersteller', icon: 'mdi-factory',   val: flatVal(e, 'Manufacturer') },
-                { label: 'Kunde',      icon: 'mdi-account',   val: flatVal(e, 'Customer') },
-                { label: 'Kontakt',    icon: 'mdi-email',      val: flatVal(e, 'ContactInformation') },
-                { label: 'Bestellung', icon: 'mdi-receipt',   val: flatVal(e, 'OrderReference') },
-                { label: 'Produkt',    icon: 'mdi-information',val: flatVal(e, 'ProductInformation') },
+                { label: 'Manufacturer', icon: 'mdi-factory',   val: flatVal(e, 'Manufacturer') },
+                { label: 'Customer',     icon: 'mdi-account',   val: flatVal(e, 'Customer') },
+                { label: 'Contact',      icon: 'mdi-email',      val: flatVal(e, 'ContactInformation') },
+                { label: 'Order',        icon: 'mdi-receipt',   val: flatVal(e, 'OrderReference') },
+                { label: 'Product',      icon: 'mdi-information',val: flatVal(e, 'ProductInformation') },
             ]
 
             return h('div', { class: 'hd-root' }, [
@@ -803,7 +803,7 @@ const HandoverDocumentationView = defineComponent({
                 // Document cards
                 h('div', { class: 'hd-docs-title' }, [
                     h('i', { class: 'mdi mdi-folder-open hd-docs-title-icon' }),
-                    'Dokumente',
+                    'Documents',
                 ]),
                 h('div', { class: 'hd-docs-grid' },
                     docCategories.map(cat => {
@@ -827,7 +827,7 @@ const HandoverDocumentationView = defineComponent({
                                         ])
                                     )
                                 )
-                                : h('div', { class: 'hd-doc-empty' }, 'Kein Dokument verfügbar'),
+                                : h('div', { class: 'hd-doc-empty' }, 'No document available'),
                         ])
                     })
                 ),
@@ -842,7 +842,7 @@ const CarbonFootPrintView = defineComponent({
     props: { entries: { type: Array as PropType<SubmodelEntry[]>, required: true } },
     setup(props) {
         const stageConfig = [
-            { key: 'PreExtractionAndProcessingCO2Equivalent', label: 'Rohstoffgewinnung',  color: '#5C6BC0', icon: 'mdi-pickaxe' },
+            { key: 'PreExtractionAndProcessingCO2Equivalent', label: 'Raw Material Extraction', color: '#5C6BC0', icon: 'mdi-pickaxe' },
             { key: 'MainProductionCO2Equivalent',              label: 'Produktion',          color: '#EF5350', icon: 'mdi-factory' },
             { key: 'BatteryDistributionCO2Equivalent',         label: 'Distribution',        color: '#FFA726', icon: 'mdi-truck' },
             { key: 'EndOfLifeAndRecyclingCO2Equivalent',       label: 'End of Life',         color: '#26A69A', icon: 'mdi-recycle' },
@@ -889,25 +889,25 @@ const CarbonFootPrintView = defineComponent({
                 // Top summary strip
                 h('div', { class: 'cf-summary' }, [
                     h('div', { class: 'cf-total-block' }, [
-                        h('div', { class: 'cf-total-label' }, 'Gesamt CO₂-Äquivalent'),
+                        h('div', { class: 'cf-total-label' }, 'Total CO₂ Equivalent'),
                         h('div', { class: 'cf-total-val' }, `${totalRaw} ${unit}`),
                         h('div', { class: 'cf-phase-badge' }, phase),
                     ]),
                     ref !== '-' ? h('a', { href: ref, target: '_blank', rel: 'noopener noreferrer', class: 'cf-ref-link' }, [
-                        h('i', { class: 'mdi mdi-open-in-new' }), ' Referenzdokument',
+                        h('i', { class: 'mdi mdi-open-in-new' }), ' Reference Document',
                     ]) : null,
                 ]),
 
                 h('div', { class: 'cf-layout' }, [
                     // Donut
                     h('div', { class: 'cf-donut-wrap' }, [
-                        h('div', { class: 'cf-chart-title' }, 'Lebenszyklus-Verteilung'),
+                        h('div', { class: 'cf-chart-title' }, 'Lifecycle Distribution'),
                         h('div', { innerHTML: donutSvg, class: 'cf-donut-container' }),
                     ]),
 
                     // Horizontal bar chart
                     h('div', { class: 'cf-bars-wrap' }, [
-                        h('div', { class: 'cf-chart-title' }, 'Phasen im Detail'),
+                        h('div', { class: 'cf-chart-title' }, 'Phases in Detail'),
                         h('div', { class: 'cf-bars' },
                             stages.map(s =>
                                 h('div', { class: 'cf-bar-row' }, [
@@ -975,22 +975,22 @@ const CircularityView = defineComponent({
                 <path d="${bg}" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="14" stroke-linecap="round"/>
                 <path d="${fg}" fill="none" stroke="#4CAF50" stroke-width="14" stroke-linecap="round"/>
                 <text x="${gcx}" y="${gcy + 6}" text-anchor="middle" font-size="22" font-weight="800" fill="#4CAF50">${recyclePct}%</text>
-                <text x="${gcx}" y="${gcy + 24}" text-anchor="middle" font-size="8" fill="currentColor" opacity="0.55">Recyclingfähigkeit</text>
+                <text x="${gcx}" y="${gcy + 24}" text-anchor="middle" font-size="8" fill="currentColor" opacity="0.55">Recyclability</text>
             </svg>`
 
             return h('div', { class: 'circ-root' }, [
                 h('div', { class: 'circ-layout' }, [
                     // Gauge
                     h('div', { class: 'circ-gauge-wrap' }, [
-                        h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-recycle circ-title-icon' }), 'Recyclingrate']),
+                        h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-recycle circ-title-icon' }), 'Recycling Rate']),
                         h('div', { innerHTML: gaugeSvg }),
-                        h('div', { class: 'circ-gauge-label' }, recyclePct >= 90 ? '🟢 Excellent' : recyclePct >= 70 ? '🟡 Gut' : '🔴 Niedrig'),
+                        h('div', { class: 'circ-gauge-label' }, recyclePct >= 90 ? '🟢 Excellent' : recyclePct >= 70 ? '🟡 Good' : '🔴 Low'),
                     ]),
 
                     h('div', { class: 'circ-right' }, [
                         // Recycled content
                         recycledContentList.length > 0 ? h('div', { class: 'circ-rc-section' }, [
-                            h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-refresh circ-title-icon' }), 'Recycelter Materialanteil']),
+                            h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-refresh circ-title-icon' }), 'Recycled Material Share']),
                             h('div', { class: 'circ-rc-list' },
                                 recycledContentList.map(item => {
                                     const ic = childEntries(item)
@@ -1009,7 +1009,7 @@ const CircularityView = defineComponent({
 
                         // Dismantling docs
                         dismantlingFiles.length > 0 ? h('div', { class: 'circ-dism-section' }, [
-                            h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-hammer-screwdriver circ-title-icon' }), 'Demontageanleitung']),
+                            h('div', { class: 'circ-section-title' }, [h('i', { class: 'mdi mdi-hammer-screwdriver circ-title-icon' }), 'Dismantling Instructions']),
                             h('div', { class: 'circ-dism-links' },
                                 dismantlingFiles.map(f =>
                                     h('a', { href: f, class: 'circ-dism-link', target: f.startsWith('http') ? '_blank' : undefined }, [
@@ -1031,12 +1031,12 @@ const TechnicalDataView = defineComponent({
     props: { entries: { type: Array as PropType<SubmodelEntry[]>, required: true } },
     setup(props) {
         const sectionMeta: Record<string, { label: string; icon: string; color: string }> = {
-            CapacityEnergyVoltage:      { label: 'Kapazität & Spannung',     icon: 'mdi-lightning-bolt',    color: '#FFA726' },
-            RoundTripEnergyEfficiency:  { label: 'Rundrip-Wirkungsgrad',     icon: 'mdi-rotate-right',      color: '#42A5F5' },
-            Resistance:                 { label: 'Innenwiderstand',           icon: 'mdi-resistor',          color: '#EF5350' },
-            PowerCapability:            { label: 'Leistung',                  icon: 'mdi-flash',             color: '#AB47BC' },
-            Temperature:                { label: 'Temperaturbereich',         icon: 'mdi-thermometer',       color: '#26C6DA' },
-            Lifetime:                   { label: 'Lebensdauer',               icon: 'mdi-calendar-clock',    color: '#66BB6A' },
+            CapacityEnergyVoltage:      { label: 'Capacity & Voltage',        icon: 'mdi-lightning-bolt',    color: '#FFA726' },
+            RoundTripEnergyEfficiency:  { label: 'Round-Trip Efficiency',     icon: 'mdi-rotate-right',      color: '#42A5F5' },
+            Resistance:                 { label: 'Internal Resistance',       icon: 'mdi-resistor',          color: '#EF5350' },
+            PowerCapability:            { label: 'Power',                     icon: 'mdi-flash',             color: '#AB47BC' },
+            Temperature:                { label: 'Temperature Range',         icon: 'mdi-thermometer',       color: '#26C6DA' },
+            Lifetime:                   { label: 'Lifetime',                  icon: 'mdi-calendar-clock',    color: '#66BB6A' },
         }
 
         function formatLabel(raw: string): string {
@@ -1056,13 +1056,13 @@ const TechnicalDataView = defineComponent({
 
             // General info key fields
             const genRows = [
-                { label: 'Hersteller',       val: flatVal(genChildren, 'ManufacturerName') },
-                { label: 'Produktname',      val: flatVal(genChildren, 'ManufacturerProductDesignation') },
-                { label: 'Artikelnummer',    val: flatVal(genChildren, 'ManufacturerArticleNumber') },
-                { label: 'Bestellcode',      val: flatVal(genChildren, 'ManufacturerOrderCode') },
-                { label: 'Garantie',         val: flatVal(genChildren, 'WarrantyPeriod') },
-                { label: 'Batterieklasse',   val: flatVal(genChildren, 'BatteryCategory') },
-                { label: 'Masse (g)',        val: flatVal(genChildren, 'BatteryMass') },
+                { label: 'Manufacturer',     val: flatVal(genChildren, 'ManufacturerName') },
+                { label: 'Product Name',     val: flatVal(genChildren, 'ManufacturerProductDesignation') },
+                { label: 'Article Number',   val: flatVal(genChildren, 'ManufacturerArticleNumber') },
+                { label: 'Order Code',       val: flatVal(genChildren, 'ManufacturerOrderCode') },
+                { label: 'Warranty',         val: flatVal(genChildren, 'WarrantyPeriod') },
+                { label: 'Battery Class',    val: flatVal(genChildren, 'BatteryCategory') },
+                { label: 'Mass (g)',         val: flatVal(genChildren, 'BatteryMass') },
             ]
 
             return h('div', { class: 'td-root' }, [
@@ -1070,7 +1070,7 @@ const TechnicalDataView = defineComponent({
                 h('div', { class: 'td-gen-card' }, [
                     h('div', { class: 'td-gen-header' }, [
                         h('i', { class: 'mdi mdi-information-outline td-gen-icon' }),
-                        h('span', {}, 'Allgemeine Informationen'),
+                        h('span', {}, 'General Information'),
                     ]),
                     h('div', { class: 'td-gen-grid' },
                         genRows.filter(r => r.val !== '-').map(r =>
@@ -1085,7 +1085,7 @@ const TechnicalDataView = defineComponent({
                 // Technical property sections
                 h('div', { class: 'td-sections' },
                     techChildren.map(section => {
-                        const meta = sectionMeta[section.idShort ?? ''] ?? { label: formatLabel(section.idShort ?? 'Eigenschaften'), icon: 'mdi-cog-outline', color: '#78909C' }
+                        const meta = sectionMeta[section.idShort ?? ''] ?? { label: formatLabel(section.idShort ?? 'Properties'), icon: 'mdi-cog-outline', color: '#78909C' }
                         const rows = childEntries(section).filter(r => r.modelType === 'Property')
                         return h('div', { class: 'td-section', style: `--sec-color:${meta.color}` }, [
                             h('div', { class: 'td-sec-header' }, [
@@ -1147,11 +1147,11 @@ const ProductConditionView = defineComponent({
             const temp = childEntries(tempRoot)
 
             const opStats = [
-                { label: 'Ladezyklen',       icon: 'mdi-battery-charging',   val: flatVal(op, 'CycleCount'),         unit: '' },
-                { label: 'Gesamtentladung',  icon: 'mdi-battery-minus',       val: flatVal(op, 'TotalDischarge'),     unit: ' Ah' },
-                { label: 'Tiefentladungen',  icon: 'mdi-battery-alert',       val: flatVal(op, 'DeepDischargeEvents'),unit: '' },
-                { label: 'Betriebsstunden',  icon: 'mdi-clock-outline',       val: flatVal(op, 'OperatingHours'),     unit: ' h' },
-                { label: 'Seit letzter Ladung', icon: 'mdi-timer-outline',    val: flatVal(op, 'TimeSinceLastCharge'),unit: ' h' },
+                { label: 'Charge Cycles',       icon: 'mdi-battery-charging',   val: flatVal(op, 'CycleCount'),         unit: '' },
+                { label: 'Total Discharge',     icon: 'mdi-battery-minus',       val: flatVal(op, 'TotalDischarge'),     unit: ' Ah' },
+                { label: 'Deep Discharges',     icon: 'mdi-battery-alert',       val: flatVal(op, 'DeepDischargeEvents'),unit: '' },
+                { label: 'Operating Hours',     icon: 'mdi-clock-outline',       val: flatVal(op, 'OperatingHours'),     unit: ' h' },
+                { label: 'Since Last Charge',   icon: 'mdi-timer-outline',       val: flatVal(op, 'TimeSinceLastCharge'),unit: ' h' },
             ]
 
             const socColor  = socPct >= 60 ? '#4CAF50' : socPct >= 30 ? '#FF9800' : '#EF5350'
@@ -1179,12 +1179,12 @@ const ProductConditionView = defineComponent({
                         h('div', { class: 'pc-gauge-label' }, 'State of Health'),
                     ]),
                     h('div', { class: 'pc-gauge-item' }, [
-                        h('div', { innerHTML: gauge(Math.round(sohEnergy), 'SoH\nEnergie', '#42A5F5', 120) }),
-                        h('div', { class: 'pc-gauge-label' }, 'SoH Energie'),
+                        h('div', { innerHTML: gauge(Math.round(sohEnergy), 'SoH\nEnergy', '#42A5F5', 120) }),
+                        h('div', { class: 'pc-gauge-label' }, 'SoH Energy'),
                     ]),
                     h('div', { class: 'pc-gauge-item' }, [
-                        h('div', { innerHTML: gauge(Math.round(sohPower), 'SoH\nLeistung', '#AB47BC', 120) }),
-                        h('div', { class: 'pc-gauge-label' }, 'SoH Leistung'),
+                        h('div', { innerHTML: gauge(Math.round(sohPower), 'SoH\nPower', '#AB47BC', 120) }),
+                        h('div', { class: 'pc-gauge-label' }, 'SoH Power'),
                     ]),
                     h('div', { class: 'pc-gauge-item' }, [
                         h('div', { innerHTML: gauge(socPct, 'SoC', socColor, 120) }),
@@ -1194,7 +1194,7 @@ const ProductConditionView = defineComponent({
 
                 // Operational stats
                 h('div', { class: 'pc-op-section' }, [
-                    h('div', { class: 'pc-section-title' }, [h('i', { class: 'mdi mdi-chart-line pc-title-icon' }), 'Betriebsdaten']),
+                    h('div', { class: 'pc-section-title' }, [h('i', { class: 'mdi mdi-chart-line pc-title-icon' }), 'Operational Data']),
                     h('div', { class: 'pc-op-grid' },
                         opStats.map(s =>
                             h('div', { class: 'pc-op-item' }, [
@@ -1208,7 +1208,7 @@ const ProductConditionView = defineComponent({
 
                 // Temperature history
                 temp.length > 0 ? h('div', { class: 'pc-temp-section' }, [
-                    h('div', { class: 'pc-section-title' }, [h('i', { class: 'mdi mdi-thermometer pc-title-icon' }), 'Temperaturverlauf']),
+                    h('div', { class: 'pc-section-title' }, [h('i', { class: 'mdi mdi-thermometer pc-title-icon' }), 'Temperature History']),
                     h('div', { class: 'pc-temp-bar-wrap' }, [
                         h('div', { class: 'pc-temp-label-min' }, `${minTemp}°C`),
                         h('div', { class: 'pc-temp-track' }, [
@@ -1297,7 +1297,7 @@ async function loadDppByDppId(dppId: string): Promise<void> {
         }
         if (!resolvedDpp) {
             dpp.value = null
-            errorMessage.value = data.message?.[0]?.text || data.result?.message?.[0]?.text || 'DPP konnte nicht geladen werden.'
+            errorMessage.value = data.message?.[0]?.text || data.result?.message?.[0]?.text || 'DPP could not be loaded.'
             return
         }
         dpp.value = resolvedDpp
@@ -1305,7 +1305,7 @@ async function loadDppByDppId(dppId: string): Promise<void> {
         activeSubmodel.value = resolvedDpp.submodels.find(s => s.name !== 'NamePlate')?.name ?? resolvedDpp.submodels[0]?.name ?? null
     } catch (error) {
         dpp.value = null
-        errorMessage.value = error instanceof Error ? error.message : 'DPP konnte nicht geladen werden.'
+        errorMessage.value = error instanceof Error ? error.message : 'DPP could not be loaded.'
     } finally {
         loading.value = false
     }
@@ -1329,7 +1329,7 @@ async function loadDpp(): Promise<void> {
         }
         if (!resolvedDpp) {
             dpp.value = null
-            errorMessage.value = data.message?.[0]?.text || data.result?.message?.[0]?.text || `Kein DPP für Product ID "${currentProductId}" gefunden.`
+            errorMessage.value = data.message?.[0]?.text || data.result?.message?.[0]?.text || `No DPP found for Product ID "${currentProductId}".`
             return
         }
         dpp.value = resolvedDpp
@@ -1337,7 +1337,7 @@ async function loadDpp(): Promise<void> {
         activeSubmodel.value = resolvedDpp.submodels.find(s => s.name !== 'NamePlate')?.name ?? resolvedDpp.submodels[0]?.name ?? null
     } catch (error) {
         dpp.value = null
-        errorMessage.value = error instanceof Error ? error.message : 'DPP konnte nicht geladen werden.'
+        errorMessage.value = error instanceof Error ? error.message : 'DPP could not be loaded.'
     } finally {
         loading.value = false
     }
