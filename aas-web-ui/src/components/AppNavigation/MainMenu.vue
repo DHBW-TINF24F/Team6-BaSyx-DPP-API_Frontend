@@ -153,9 +153,9 @@
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/detail/edit')"
-                            subtitle="Edit Digital Product Passport"
-                            title="DPP Editor"
+                            :border="isActiveRoutePath('/dpp/registry')"
+                            subtitle="Manage all registered Digital Product Passports in the Registry"
+                            title="DPP Registry"
                             :to="dppEditorTarget"
                             @click="closeMenu">
                             <template #prepend>
