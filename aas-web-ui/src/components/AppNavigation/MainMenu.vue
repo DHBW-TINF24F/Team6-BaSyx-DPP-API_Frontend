@@ -138,7 +138,7 @@
                             :active="false"
                             nav
                             :border="isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')"
-                            subtitle="View Digital Product Passport"
+                            subtitle="View the selected AAS as Digital Product Passport (DPP) and its details"
                             title="DPP Viewer"
                             :to="dppViewerTarget"
                             @click="closeMenu">
