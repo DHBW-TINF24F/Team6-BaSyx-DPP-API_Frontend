@@ -115,7 +115,6 @@ const staticRoutes: Array<RouteRecordRaw> = [
         meta: { name: 'DPP List', subtitle: 'All Digital Product Passports' },
     },
     {
-        
         path: '/dpp/registry',
         name: 'DPPRegistry',
         component: DPPRegistry,
