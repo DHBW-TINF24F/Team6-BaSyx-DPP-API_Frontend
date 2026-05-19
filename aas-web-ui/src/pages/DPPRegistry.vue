@@ -159,8 +159,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useEnvStore } from '@/store/EnvironmentStore';
+import { useAASStore } from '@/store/AASDataStore';
+
+/* STORE */
+const aasStore = useAASStore();
 
 /* STATE */
 const aasList = ref<any[]>([]);
@@ -196,6 +200,7 @@ async function fetchAAS() {
             item.displayName?.[0]?.text ||
             item.idShort ||
             'Unnamed',
+        _raw: item,
     }));
 }
 
@@ -217,11 +222,8 @@ async function loadDpps(aas: any) {
             body: JSON.stringify([encodedAssetId]),
         }
     );
-
     const data = await res.json();
-
     const dpps = data?.results?.[encodedAssetId] || [];
-
     const detailed = await Promise.all(
         dpps.map(async (entry: any) => {
 
@@ -231,7 +233,6 @@ async function loadDpps(aas: any) {
 
             const json = await detailRes.json();
             const dpp = json.dpp;
-
             return {
                 id: dpp.dppId,
                 version: dpp.version,
@@ -249,6 +250,7 @@ async function loadDpps(aas: any) {
 /* SELECT */
 async function selectAas(aas: any) {
     selectedAas.value = aas;
+    aasStore.dispatchSelectedAAS(aas._raw);
     await loadDpps(aas);
 }
 /* DELETE */
@@ -332,7 +334,28 @@ const selectedDpps = computed(() => {
 });
 
 /* INIT */
-onMounted(fetchAAS);
+onMounted(async () => {
+    await fetchAAS();
+    const storeAas = aasStore.getSelectedAAS;
+    if (storeAas?.id) {
+        const match = aasList.value.find(a => a.id === storeAas.id);
+        if (match) await selectAas(match);
+    }
+});
+
+/* SYNC FROM STORE */
+watch(
+    () => aasStore.getSelectedAAS,
+    async (newVal) => {
+        if (!newVal?.id) { selectedAas.value = null; return; }
+        if (selectedAas.value?.id === newVal.id) return;
+        const match = aasList.value.find(a => a.id === newVal.id);
+        if (match) {
+            selectedAas.value = match;
+            await loadDpps(match);
+        }
+    }
+);
 </script>
 
 <style scoped>
