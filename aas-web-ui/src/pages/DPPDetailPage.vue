@@ -37,7 +37,16 @@
                         <h1 class="dpp-title text-h4 font-weight-bold mb-2">{{ nameFromState }}</h1>
                         <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">DPP-ID: {{ decodeBase64(dpp.dppId) }}</p>
                     </div>
-                    <div class="d-flex align-center ga-2">
+                    <div class="d-flex align-start ga-4">
+                        <div v-if="qrCodeDataUrl" class="d-flex flex-column align-center">
+                            <v-tooltip text="Global Asset ID" location="bottom">
+                                <template #activator="{ props: ttProps }">
+                                    <img v-bind="ttProps" :src="qrCodeDataUrl" alt="Global Asset ID QR-Code" class="qr-hero-img" />
+                                </template>
+                            </v-tooltip>
+                            <span class="text-caption text-grey mt-1">Global Asset ID</span>
+                        </div>
+                        <div class="d-flex align-center ga-2">
                         <v-menu v-if="dppVersions.length > 1" :close-on-content-click="true" location="bottom end" max-height="360">
                             <template #activator="{ props: menuProps }">
                                 <v-btn v-bind="menuProps" variant="tonal" color="primary" size="small" class="version-switcher-btn">
@@ -82,6 +91,7 @@
                         <v-btn class="back-btn" variant="elevated" color="white" prepend-icon="mdi-arrow-left" size="small" elevation="3" @click="goBack">
                             Zurück
                         </v-btn>
+                        </div>
                     </div>
                 </div>
 
@@ -89,11 +99,25 @@
 
                 <v-row dense>
                     <v-col cols="12" sm="6" md="3">
-                        <div class="meta-label">Product ID</div>
+                        <div class="d-flex align-center ga-1 mb-1">
+                            <div class="meta-label mb-0">Product ID</div>
+                            <v-tooltip :text="copiedKey === 'productId' ? 'Kopiert!' : 'Kopieren'" location="top">
+                                <template #activator="{ props: tt }">
+                                    <v-btn v-bind="tt" :icon="copiedKey === 'productId' ? 'mdi-check' : 'mdi-content-copy'" size="x-small" variant="text" :color="copiedKey === 'productId' ? 'success' : 'grey'" @click="copyToClipboard(decodeBase64(dpp.productId), 'productId')" />
+                                </template>
+                            </v-tooltip>
+                        </div>
                         <div class="meta-value text-break">{{ decodeBase64(dpp.productId) }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
-                        <div class="meta-label">DPP ID</div>
+                        <div class="d-flex align-center ga-1 mb-1">
+                            <div class="meta-label mb-0">DPP ID</div>
+                            <v-tooltip :text="copiedKey === 'dppId' ? 'Kopiert!' : 'Kopieren'" location="top">
+                                <template #activator="{ props: tt }">
+                                    <v-btn v-bind="tt" :icon="copiedKey === 'dppId' ? 'mdi-check' : 'mdi-content-copy'" size="x-small" variant="text" :color="copiedKey === 'dppId' ? 'success' : 'grey'" @click="copyToClipboard(decodeBase64(dpp.dppId), 'dppId')" />
+                                </template>
+                            </v-tooltip>
+                        </div>
                         <div class="meta-value text-break">{{ decodeBase64(dpp.dppId) }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
@@ -105,88 +129,114 @@
                         <div class="meta-value text-break">{{ formatTimestamp(dpp.createdAt) }}</div>
                     </v-col>
                 </v-row>
+
+                <template v-if="namePlateBanner">
+                    <v-divider class="border-primary mt-6 mb-4" thickness="1" opacity="0.4" />
+                    <div class="np-banner-label mb-3">
+                        <v-icon size="14" color="primary" class="mr-1">mdi-id-card-outline</v-icon>
+                        NamePlate
+                    </div>
+                    <v-row dense>
+                        <v-col v-if="namePlateBanner.manufacturer !== '-'" cols="12" sm="6" md="4">
+                            <div class="meta-label">Hersteller</div>
+                            <div class="meta-value text-break">{{ namePlateBanner.manufacturer }}</div>
+                        </v-col>
+                        <v-col v-if="namePlateBanner.product !== '-'" cols="12" sm="6" md="4">
+                            <div class="meta-label">Produktbezeichnung</div>
+                            <div class="meta-value text-break">{{ namePlateBanner.product }}</div>
+                        </v-col>
+                        <v-col v-if="namePlateBanner.family !== '-'" cols="12" sm="6" md="4">
+                            <div class="meta-label">Produktfamilie</div>
+                            <div class="meta-value text-break">{{ namePlateBanner.family }}</div>
+                        </v-col>
+                        <v-col v-if="namePlateBanner.serial !== '-'" cols="12" sm="6" md="4">
+                            <div class="meta-label">Seriennummer</div>
+                            <div class="meta-value text-break">{{ namePlateBanner.serial }}</div>
+                        </v-col>
+                        <v-col v-if="namePlateBanner.year !== '-'" cols="12" sm="6" md="4">
+                            <div class="meta-label">Baujahr</div>
+                            <div class="meta-value text-break">{{ namePlateBanner.year }}</div>
+                        </v-col>
+                    </v-row>
+                    <template v-if="namePlateBanner.street !== '-' || namePlateBanner.city !== '-'">
+                        <div class="np-banner-label mt-4 mb-2">
+                            <v-icon size="14" color="primary" class="mr-1">mdi-map-marker-outline</v-icon>
+                            Kontaktadresse
+                        </div>
+                        <div class="meta-value">
+                            <span v-if="namePlateBanner.street !== '-'">{{ namePlateBanner.street }}, </span>
+                            <span>{{ namePlateBanner.zip !== '-' ? namePlateBanner.zip + ' ' : '' }}{{ namePlateBanner.city !== '-' ? namePlateBanner.city : '' }}</span>
+                            <span v-if="namePlateBanner.country !== '-'">, {{ namePlateBanner.country }}</span>
+                        </div>
+                    </template>
+                    <template v-if="namePlateBanner.markings.length > 0">
+                        <div class="np-banner-label mt-4 mb-2">
+                            <v-icon size="14" color="primary" class="mr-1">mdi-certificate-outline</v-icon>
+                            Kennzeichnungen
+                        </div>
+                        <div class="d-flex flex-wrap ga-1">
+                            <v-chip v-for="mark in namePlateBanner.markings" :key="mark" size="small" variant="tonal" color="primary">{{ mark }}</v-chip>
+                        </div>
+                    </template>
+                </template>
             </v-card>
 
             <!-- Content Row -->
             <v-row class="mb-12">
                 <!-- Main Section -->
                 <v-col cols="12" md="8" class="pr-md-6">
-                    <h1 class="dpp-title text-h4 font-weight-bold mb-4">Submodels</h1>
-                    <p class="dpp-description text-body-1 text-grey-darken-1 mb-6">
-                        Die Detailseite lädt die Informationen direkt aus dem DPP-Backend.
-                        Klicke auf ein Submodel, um dessen Werte anzuzeigen.
-                    </p>
                     <v-divider class="border-primary mb-6" thickness="2" />
 
-                    <template v-if="dpp.submodels.length > 0">
-                        <v-expansion-panels v-model="openPanels" multiple variant="accordion" class="submodel-panels">
-                            <v-expansion-panel
-                                v-for="submodel in dpp.submodels"
-                                :key="`${submodel.reference}-${submodel.name}`"
-                                :value="submodel.name"
-                                class="submodel-panel"
-                                elevation="0"
-                            >
-                                <v-expansion-panel-title class="submodel-panel-title px-4 py-3">
-                                    <div class="d-flex align-center ga-3 flex-1">
-                                        <v-avatar color="primary" variant="tonal" size="40">
-                                            <v-icon :icon="submodelIcon(submodel.name, openPanels.includes(submodel.name))" />
-                                        </v-avatar>
-                                        <div class="min-w-0">
-                                            <div class="font-weight-semibold submodel-name">{{ submodel.name || 'Unbenanntes Submodel' }}</div>
-                                            <div class="text-caption text-grey text-truncate submodel-ref">{{ submodel.reference }}</div>
-                                        </div>
-                                    </div>
-                                    <template #actions="{ expanded }">
-                                        <div class="d-flex align-center ga-2">
-                                            <v-chip size="small" variant="tonal" color="primary">{{ submodel.version || '-' }}</v-chip>
-                                            <v-icon :icon="expanded ? 'mdi-chevron-up' : 'mdi-chevron-down'" color="primary" />
-                                        </div>
-                                    </template>
-                                </v-expansion-panel-title>
+                    <template v-if="dpp.submodels.length > 0 && activeSubmodel">
+                        <div class="submodel-active-header d-flex align-center ga-3 mb-6">
+                            <v-avatar color="primary" variant="tonal" size="44">
+                                <v-icon :icon="submodelIcon(activeSubmodel, true)" />
+                            </v-avatar>
+                            <div class="min-w-0">
+                                <div class="font-weight-semibold submodel-name text-h6">{{ activeSubmodel }}</div>
+                                <div class="text-caption text-grey text-truncate submodel-ref">
+                                    {{ dpp.submodels.find(s => s.name === activeSubmodel)?.reference }}
+                                </div>
+                            </div>
+                            <v-chip size="small" variant="tonal" color="primary" class="ml-auto">
+                                {{ dpp.submodels.find(s => s.name === activeSubmodel)?.version || '-' }}
+                            </v-chip>
+                        </div>
 
-                                <v-expansion-panel-text class="submodel-panel-content">
-                                    <div v-if="getSubmodelEntries(submodel.name).length > 0">
-                                        <!-- ── Specialized renderers ── -->
-                                        <NamePlateView
-                                            v-if="submodel.name === 'NamePlate'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <MaterialCompositionView
-                                            v-else-if="submodel.name === 'MaterialComposition'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <HandoverDocumentationView
-                                            v-else-if="submodel.name === 'HandoverDocumentation'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <CarbonFootPrintView
-                                            v-else-if="submodel.name === 'CarbonFootPrint'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <CircularityView
-                                            v-else-if="submodel.name === 'Circularity'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <TechnicalDataView
-                                            v-else-if="submodel.name === 'TechnicalData'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <ProductConditionView
-                                            v-else-if="submodel.name === 'ProductCondition'"
-                                            :entries="getSubmodelEntries(submodel.name)"
-                                        />
-                                        <!-- ── Generic fallback ── -->
-                                        <div v-else class="values-container">
-                                            <ValueTree :entries="getSubmodelEntries(submodel.name)" />
-                                        </div>
-                                    </div>
-                                    <v-alert v-else type="info" variant="tonal" density="compact" class="mt-1 mb-2">
-                                        Keine Values für dieses Submodel verfügbar.
-                                    </v-alert>
-                                </v-expansion-panel-text>
-                            </v-expansion-panel>
-                        </v-expansion-panels>
+                        <div class="submodel-panel-content">
+                            <div v-if="getSubmodelEntries(activeSubmodel).length > 0">
+                                <MaterialCompositionView
+                                    v-if="activeSubmodel === 'MaterialComposition'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <HandoverDocumentationView
+                                    v-else-if="activeSubmodel === 'HandoverDocumentation'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <CarbonFootPrintView
+                                    v-else-if="activeSubmodel === 'CarbonFootPrint'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <CircularityView
+                                    v-else-if="activeSubmodel === 'Circularity'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <TechnicalDataView
+                                    v-else-if="activeSubmodel === 'TechnicalData'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <ProductConditionView
+                                    v-else-if="activeSubmodel === 'ProductCondition'"
+                                    :entries="getSubmodelEntries(activeSubmodel)"
+                                />
+                                <div v-else class="values-container">
+                                    <ValueTree :entries="getSubmodelEntries(activeSubmodel)" />
+                                </div>
+                            </div>
+                            <v-alert v-else type="info" variant="tonal" density="compact" class="mt-1">
+                                Keine Values für dieses Submodel verfügbar.
+                            </v-alert>
+                        </div>
                     </template>
 
                     <v-alert v-else type="info" variant="tonal" class="mt-2">
@@ -197,17 +247,16 @@
                 <!-- Sidebar -->
                 <v-col cols="12" md="4">
                     <v-card class="sidebar-card pa-6" elevation="2">
-                        <h2 class="section-title text-h5 font-weight-bold mb-4">Submodels</h2>
                         <div class="d-flex flex-column ga-2">
                             <div
-                                v-for="submodel in dpp.submodels"
+                                v-for="submodel in dpp.submodels.filter(s => s.name !== 'NamePlate')"
                                 :key="submodel.name"
                                 class="sidebar-submodel-chip"
-                                :class="{ 'sidebar-submodel-chip--active': openPanels.includes(submodel.name) }"
-                                @click="togglePanel(submodel.name)"
+                                :class="{ 'sidebar-submodel-chip--active': activeSubmodel === submodel.name }"
+                                @click="selectSubmodel(submodel.name)"
                             >
-                                <v-icon size="14" :color="openPanels.includes(submodel.name) ? 'primary' : 'grey'" class="mr-2">
-                                    {{ submodelIcon(submodel.name, openPanels.includes(submodel.name)) }}
+                                <v-icon size="14" :color="activeSubmodel === submodel.name ? 'primary' : 'grey'" class="mr-2">
+                                    {{ submodelIcon(submodel.name, activeSubmodel === submodel.name) }}
                                 </v-icon>
                                 <span>{{ submodel.name }}</span>
                             </div>
@@ -220,6 +269,7 @@
 </template>
 
 <script lang="ts" setup>
+import QRCode from 'qrcode'
 import { computed, defineComponent, h, onMounted, ref, watch, type PropType, type VNode } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAASStore } from '@/store/AASDataStore'
@@ -331,8 +381,18 @@ const dpp              = ref<Dpp | null>(null)
 const loading          = ref(true)
 const errorMessage     = ref('')
 const submodelsValues  = ref<Record<string, SubmodelEntry[]> | null>(null)
-const openPanels       = ref<string[]>([])
+const activeSubmodel   = ref<string | null>(null)
 const dppVersions      = ref<DppVersionEntry[]>([])
+const qrCodeDataUrl    = ref('')
+
+watch(productId, async (id) => {
+    if (!id) { qrCodeDataUrl.value = ''; return }
+    try {
+        qrCodeDataUrl.value = await QRCode.toDataURL(id, { errorCorrectionLevel: 'Q', margin: 2, scale: 5 })
+    } catch {
+        qrCodeDataUrl.value = ''
+    }
+}, { immediate: true })
 
 const currentVersionIndex = computed(() => {
     if (!dpp.value || dppVersions.value.length === 0) return 0
@@ -340,10 +400,31 @@ const currentVersionIndex = computed(() => {
     return idx >= 0 ? idx : 0
 })
 
-function togglePanel(name: string) {
-    const idx = openPanels.value.indexOf(name)
-    if (idx >= 0) openPanels.value.splice(idx, 1)
-    else openPanels.value.push(name)
+const namePlateBanner = computed(() => {
+    const e = getSubmodelEntries('NamePlate')
+    if (!e.length) return null
+    const manufacturer = flatVal(e, 'ManufacturerName')
+    const product      = flatVal(e, 'ManufacturerProductDesignation')
+    const family       = flatVal(e, 'ManufacturerProductFamily')
+    const serial       = flatVal(e, 'SerialNumber')
+    const year         = flatVal(e, 'YearOfConstruction')
+    if ([manufacturer, product, family, serial, year].every(v => v === '-')) return null
+    const contact  = childEntries(findByIdShort(e, 'ContactInformation'))
+    const markings = childEntries(findByIdShort(e, 'Markings'))
+        .map(m => flatVal(childEntries(m), 'MarkingName'))
+        .filter(n => n !== '-')
+    return {
+        manufacturer, product, family, serial, year,
+        street: flatVal(contact, 'Street'),
+        zip:    flatVal(contact, 'ZipCode'),
+        city:   flatVal(contact, 'City'),
+        country: flatVal(contact, 'Country'),
+        markings,
+    }
+})
+
+function selectSubmodel(name: string) {
+    activeSubmodel.value = name
 }
 
 // ─── Normalisation helpers ────────────────────────────────────────────────────
@@ -543,88 +624,7 @@ const ValueTree = defineComponent({
 // ── Specialized Submodel Components ──────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── 1. NamePlate ─────────────────────────────────────────────────────────────
-const NamePlateView = defineComponent({
-    name: 'NamePlateView',
-    props: { entries: { type: Array as PropType<SubmodelEntry[]>, required: true } },
-    setup(props) {
-        return () => {
-            const e = props.entries
-            const contact = childEntries(findByIdShort(e, 'ContactInformation'))
-            const markings = childEntries(findByIdShort(e, 'Markings'))
-
-            // Main info rows
-            const infoRows = [
-                { label: 'Hersteller',       icon: 'mdi-factory',        val: flatVal(e, 'ManufacturerName') },
-                { label: 'Produktbezeichnung', icon: 'mdi-tag',           val: flatVal(e, 'ManufacturerProductDesignation') },
-                { label: 'Produktfamilie',   icon: 'mdi-layers-triple',   val: flatVal(e, 'ManufacturerProductFamily') },
-                { label: 'Seriennummer',     icon: 'mdi-barcode',         val: flatVal(e, 'SerialNumber') },
-                { label: 'Baujahr',          icon: 'mdi-calendar',        val: flatVal(e, 'YearOfConstruction') },
-            ]
-
-            return h('div', { class: 'np-root' }, [
-                // Header band
-                h('div', { class: 'np-header' }, [
-                    h('div', { class: 'np-header-icon' }, [
-                        h('i', { class: 'mdi mdi-id-card np-hicon' })
-                    ]),
-                    h('div', {}, [
-                        h('div', { class: 'np-header-title' }, flatVal(e, 'ManufacturerName')),
-                        h('div', { class: 'np-header-sub' }, flatVal(e, 'ManufacturerProductDesignation')),
-                    ])
-                ]),
-
-                // Info grid
-                h('div', { class: 'np-grid' },
-                    infoRows.map(row =>
-                        h('div', { class: 'np-card' }, [
-                            h('i', { class: `mdi ${row.icon} np-card-icon` }),
-                            h('div', { class: 'np-card-label' }, row.label),
-                            h('div', { class: 'np-card-val' }, row.val),
-                        ])
-                    )
-                ),
-
-                // Contact block
-                contact.length > 0 ? h('div', { class: 'np-section' }, [
-                    h('div', { class: 'np-section-title' }, [
-                        h('i', { class: 'mdi mdi-map-marker np-section-icon' }),
-                        'Kontaktadresse',
-                    ]),
-                    h('div', { class: 'np-address' }, [
-                        h('div', {}, flatVal(contact, 'Street')),
-                        h('div', {}, `${flatVal(contact, 'ZipCode')} ${flatVal(contact, 'City')}`),
-                        h('div', {}, flatVal(contact, 'Country')),
-                    ])
-                ]) : null,
-
-                // Markings
-                markings.length > 0 ? h('div', { class: 'np-section' }, [
-                    h('div', { class: 'np-section-title' }, [
-                        h('i', { class: 'mdi mdi-certificate np-section-icon' }),
-                        'Kennzeichnungen',
-                    ]),
-                    h('div', { class: 'np-markings' },
-                        markings.map(m => {
-                            const mChildren = childEntries(m)
-                            const name = flatVal(mChildren, 'MarkingName')
-                            const fileEntry = findByIdShort(mChildren, 'MarkingFile')
-                            const fileSrc = fileEntry ? String(fileEntry.value ?? '') : ''
-                            return h('div', { class: 'np-marking-chip' }, [
-                                fileSrc && fileSrc !== '-'
-                                    ? h('img', { src: fileSrc, class: 'np-marking-img', alt: name, onError: (ev: Event) => { (ev.target as HTMLImageElement).style.display = 'none' } })
-                                    : h('i', { class: 'mdi mdi-certificate-outline np-marking-fallback-icon' }),
-                                h('span', { class: 'np-marking-name' }, name),
-                            ])
-                        })
-                    )
-                ]) : null,
-            ])
-        }
-    },
-})
-
-// ─── 2. MaterialComposition ───────────────────────────────────────────────────
+// ─── 1. MaterialComposition ───────────────────────────────────────────────────
 const MaterialCompositionView = defineComponent({
     name: 'MaterialCompositionView',
     props: { entries: { type: Array as PropType<SubmodelEntry[]>, required: true } },
@@ -1231,6 +1231,17 @@ const ProductConditionView = defineComponent({
     },
 })
 
+// ─── Clipboard ───────────────────────────────────────────────────────────────
+const copiedKey = ref<string | null>(null)
+
+async function copyToClipboard(text: string, key: string) {
+    try {
+        await navigator.clipboard.writeText(text)
+        copiedKey.value = key
+        setTimeout(() => { if (copiedKey.value === key) copiedKey.value = null }, 2000)
+    } catch { /* clipboard not available */ }
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function goBack() { router.push({ name: 'DPPList' }) }
 
@@ -1238,28 +1249,40 @@ function goBack() { router.push({ name: 'DPPList' }) }
 async function loadDppVersions(): Promise<void> {
     if (!productId.value) { dppVersions.value = []; return }
 
-    const b64ProductId = encodeBase64(productId.value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    const urlSafeB64 = encodeBase64(productId.value)
+    let stdB64 = urlSafeB64
+    try { stdB64 = btoa(productId.value) } catch { /* non-latin chars – urlSafeB64 already covers it */ }
     try {
         const response = await fetch('https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductIds', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify([b64ProductId]),
+            body: JSON.stringify([urlSafeB64]),
         })
         if (!response.ok) { dppVersions.value = []; return }
         const data = (await response.json()) as DppVersionsResponse
         if (data?.status?.toLowerCase() === 'success' && data.results) {
-            const entries = data.results[b64ProductId] || Object.values(data.results)[0] || []
+            // Try all plausible key formats the API might return
+            const entries: DppVersionEntry[] =
+                data.results[urlSafeB64] ||
+                data.results[stdB64]     ||
+                data.results[productId.value] ||
+                Object.values(data.results)[0] ||
+                []
+            // Always make sure the currently loaded DPP appears in the list
+            if (dpp.value && !entries.some(v => v.dppId === dpp.value!.dppId)) {
+                entries.push({ dppId: dpp.value.dppId })
+            }
             dppVersions.value = entries
         } else {
-            dppVersions.value = []
+            dppVersions.value = dpp.value ? [{ dppId: dpp.value.dppId }] : []
         }
     } catch {
-        dppVersions.value = []
+        dppVersions.value = dpp.value ? [{ dppId: dpp.value.dppId }] : []
     }
 }
 
 async function loadDppByDppId(dppId: string): Promise<void> {
-    loading.value = true; errorMessage.value = ''; openPanels.value = []
+    loading.value = true; errorMessage.value = ''; activeSubmodel.value = null
     try {
         const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dpps/${dppId}`)
         const data = (await response.json()) as DppApiResponse
@@ -1279,6 +1302,7 @@ async function loadDppByDppId(dppId: string): Promise<void> {
         }
         dpp.value = resolvedDpp
         submodelsValues.value = normalizeSubmodelsValues((resolvedSV as Record<string, unknown>) ?? null)
+        activeSubmodel.value = resolvedDpp.submodels.find(s => s.name !== 'NamePlate')?.name ?? resolvedDpp.submodels[0]?.name ?? null
     } catch (error) {
         dpp.value = null
         errorMessage.value = error instanceof Error ? error.message : 'DPP konnte nicht geladen werden.'
@@ -1290,7 +1314,7 @@ async function loadDppByDppId(dppId: string): Promise<void> {
 async function loadDpp(): Promise<void> {
     const currentProductId = encodeBase64(productId.value)
     if (!currentProductId) { dpp.value = null; errorMessage.value = ''; loading.value = false; return }
-    loading.value = true; errorMessage.value = ''; openPanels.value = []
+    loading.value = true; errorMessage.value = ''; activeSubmodel.value = null
     try {
         const response = await fetch(`https://srv01.noah-becker.de/uni/swe/api/dpp/dppsByProductId/${currentProductId}`)
         const data = (await response.json()) as DppApiResponse
@@ -1310,6 +1334,7 @@ async function loadDpp(): Promise<void> {
         }
         dpp.value = resolvedDpp
         submodelsValues.value = normalizeSubmodelsValues((resolvedSV as Record<string, unknown>) ?? null)
+        activeSubmodel.value = resolvedDpp.submodels.find(s => s.name !== 'NamePlate')?.name ?? resolvedDpp.submodels[0]?.name ?? null
     } catch (error) {
         dpp.value = null
         errorMessage.value = error instanceof Error ? error.message : 'DPP konnte nicht geladen werden.'
@@ -1339,8 +1364,11 @@ watch(productId, async () => {
      SCOPED – template elements
 ════════════════════════════════════════════════════════════════════════════ -->
 <style scoped>
-.dpp-detail-container { max-width: 1200px; margin: 0 auto; }
+.dpp-detail-container { max-width: 1600px; margin: 0 auto; }
 .hero-card            { border-radius: 12px; }
+.qr-hero-img          { width: 88px; height: 88px; border-radius: 6px; border: 1px solid rgba(var(--v-border-color), .2); cursor: default; }
+.np-banner-label      { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--v-theme-primary)); display: flex; align-items: center; }
+.submodel-active-header { padding: 0; }
 .back-btn             { color: rgb(var(--v-theme-primary)) !important; font-weight: 500; }
 .dpp-title      { color: rgb(var(--v-theme-titleText)); }
 .section-title  { color: rgb(var(--v-theme-titleText)); border-bottom: 2px solid rgb(var(--v-theme-primary)); padding-bottom: 8px; }
@@ -1466,14 +1494,14 @@ watch(productId, async () => {
    3. HandoverDocumentation
 ══════════════════════════════════════════════════════════════════════════ */
 .hd-root { display: flex; flex-direction: column; gap: 16px; }
-.hd-meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.hd-meta-grid { display: flex; flex-direction: column; gap: 10px; }
 .hd-meta-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: rgba(var(--v-border-color), .06); border-radius: 8px; }
 .hd-meta-icon { font-size: 16px; color: rgb(var(--v-theme-primary)); margin-top: 1px; flex-shrink: 0; }
 .hd-meta-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; color: rgb(var(--v-theme-primary)); letter-spacing: .05em; }
 .hd-meta-val   { font-size: .83rem; color: rgb(var(--v-theme-titleText)); margin-top: 1px; word-break: break-word; }
 .hd-docs-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgb(var(--v-theme-primary)); display: flex; align-items: center; gap: 6px; }
 .hd-docs-title-icon { font-size: 15px; }
-.hd-docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.hd-docs-grid { display: flex; flex-direction: column; gap: 12px; }
 .hd-doc-card { border-radius: 10px; border: 1px solid rgba(var(--v-border-color), .15); overflow: hidden; }
 .hd-doc-card-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: color-mix(in srgb, var(--cat-color) 12%, transparent); border-bottom: 1px solid rgba(var(--v-border-color), .1); }
 .hd-doc-card-icon  { font-size: 18px; color: var(--cat-color); }
