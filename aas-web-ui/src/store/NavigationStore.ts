@@ -52,7 +52,6 @@ export const useNavigationStore = defineStore('navigationStore', () => {
     const getModuleRoutes = computed(() => moduleRoutes.value);
     const getCoreQueryParams = computed(() => coreQueryParams);
     const getRegisteredQueryParams = computed(() => registeredQueryParams.value);
-    const getSelectedAasName = computed(() => selectedAasName.value);
 
     const envStore = useEnvStore();
 
@@ -121,14 +120,6 @@ export const useNavigationStore = defineStore('navigationStore', () => {
 
     function dispatchModuleRoutes(routes: RouteRecordRaw[]): void {
         moduleRoutes.value = routes;
-    }
-
-    function setSelectedAasName(name: string): void {
-        selectedAasName.value = name;
-    }
-
-    function clearSelectedAasName(): void {
-        selectedAasName.value = '';
     }
 
     /**
@@ -263,7 +254,6 @@ export const useNavigationStore = defineStore('navigationStore', () => {
         getModuleRoutes,
         getCoreQueryParams,
         getRegisteredQueryParams,
-        getSelectedAasName,
 
         // Actions
         dispatchDrawerState,
@@ -287,9 +277,5 @@ export const useNavigationStore = defineStore('navigationStore', () => {
         unregisterAllQueryParamsForPlugin,
         getAllowedQueryParams,
         filterQueryParams,
-        // Selected name helpers
-        getSelectedAasName,
-        setSelectedAasName,
-        clearSelectedAasName,
     };
 });
