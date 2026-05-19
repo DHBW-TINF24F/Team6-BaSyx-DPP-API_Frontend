@@ -137,7 +137,7 @@
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')"
+                            :border="isActiveRoutePath('/dpp/detail')"
                             subtitle="View the selected AAS as Digital Product Passport (DPP) and its details"
                             title="DPP Viewer"
                             :to="dppViewerTarget"
@@ -149,14 +149,14 @@
                             </template>
                         </v-list-item>
                         <v-list-item
-                            v-if="allowEditing && currentTab === 'dpp'"
+                            v-if="currentTab === 'dpp'"
                             class="mt-3 py-2"
                             :active="false"
                             nav
                             :border="isActiveRoutePath('/dpp/registry')"
                             subtitle="Manage all registered Digital Product Passports in the Registry"
                             title="DPP Registry"
-                            :to="dppEditorTarget"
+                            :to="dppRegistryTarget"
                             @click="closeMenu">
                             <template #prepend>
                                 <v-avatar color="surface-light" icon="mdi-pencil" rounded>
@@ -273,10 +273,10 @@
         const aas = dppAasQuery.value;
         return aas ? { path: '/dpp/detail', query: { aas } } : { path: '/dpp/detail' };
     });
-    const dppEditorTarget = computed(() => {
-        if (isActiveRoutePath('/dpp/detail/edit')) return '';
+    const dppRegistryTarget = computed(() => {
+        if (isActiveRoutePath('/dpp/registry')) return '';
         const aas = dppAasQuery.value;
-        return aas ? { path: '/dpp/detail/edit', query: { aas } } : { path: '/dpp/list' };
+        return aas ? { path: '/dpp/registry', query: { aas } } : { path: '/dpp/registry' };
     });
     const filteredAndOrderedModuleRoutes = computed(() => {
         const filteredModuleRoutes = moduleRoutes.value.filter((moduleRoute: RouteRecordRaw) => {
