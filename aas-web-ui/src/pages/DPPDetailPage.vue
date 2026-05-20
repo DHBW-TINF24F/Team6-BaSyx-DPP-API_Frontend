@@ -183,8 +183,28 @@
 
             <!-- Content Row -->
             <v-row class="mb-12">
+                <!-- Sidebar -->
+                <v-col cols="12" md="4">
+                    <v-card class="sidebar-card pa-6" elevation="2">
+                        <div class="d-flex flex-column ga-2">
+                            <div
+                                v-for="submodel in dpp.submodels.filter(s => s.name !== 'NamePlate')"
+                                :key="submodel.name"
+                                class="sidebar-submodel-chip"
+                                :class="{ 'sidebar-submodel-chip--active': activeSubmodel === submodel.name }"
+                                @click="selectSubmodel(submodel.name)"
+                            >
+                                <v-icon size="14" :color="activeSubmodel === submodel.name ? 'primary' : 'grey'" class="mr-2">
+                                    {{ submodelIcon(submodel.name, activeSubmodel === submodel.name) }}
+                                </v-icon>
+                                <span>{{ submodel.name }}</span>
+                            </div>
+                        </div>
+                    </v-card>
+                </v-col>
+
                 <!-- Main Section -->
-                <v-col cols="12" md="8" class="pr-md-6">
+                <v-col cols="12" md="8" class="pl-md-6">
                     <v-divider class="border-primary mb-6" thickness="2" />
 
                     <template v-if="dpp.submodels.length > 0 && activeSubmodel">
@@ -242,26 +262,6 @@
                     <v-alert v-else type="info" variant="tonal" class="mt-2">
                         No submodels stored for this DPP.
                     </v-alert>
-                </v-col>
-
-                <!-- Sidebar -->
-                <v-col cols="12" md="4">
-                    <v-card class="sidebar-card pa-6" elevation="2">
-                        <div class="d-flex flex-column ga-2">
-                            <div
-                                v-for="submodel in dpp.submodels.filter(s => s.name !== 'NamePlate')"
-                                :key="submodel.name"
-                                class="sidebar-submodel-chip"
-                                :class="{ 'sidebar-submodel-chip--active': activeSubmodel === submodel.name }"
-                                @click="selectSubmodel(submodel.name)"
-                            >
-                                <v-icon size="14" :color="activeSubmodel === submodel.name ? 'primary' : 'grey'" class="mr-2">
-                                    {{ submodelIcon(submodel.name, activeSubmodel === submodel.name) }}
-                                </v-icon>
-                                <span>{{ submodel.name }}</span>
-                            </div>
-                        </div>
-                    </v-card>
                 </v-col>
             </v-row>
         </template>
