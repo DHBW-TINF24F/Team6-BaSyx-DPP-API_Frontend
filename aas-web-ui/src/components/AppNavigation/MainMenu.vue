@@ -2,11 +2,7 @@
     <v-container fluid class="pa-0">
         <v-card class="pa-2" border rounded="lg" color="navigationMenu" :min-width="620">
             <v-container>
-                <v-sheet
-                    class="overflow-hidden mx-auto mb-4"
-                    :elevation="2"
-                    rounded="lg"
-                    min-width="450">
+                <v-sheet class="overflow-hidden mx-auto mb-4" :elevation="2" rounded="lg" min-width="450">
                     <v-tabs v-model="currentTab" color="primary" grow>
                         <v-tab value="aas" class="text-none" text="AAS" />
 
@@ -141,8 +137,8 @@
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')"
-                            subtitle="View Digital Product Passport"
+                            :border="isActiveRoutePath('/dpp/detail')"
+                            subtitle="View the selected AAS as Digital Product Passport (DPP) and its details"
                             title="DPP Viewer"
                             :to="dppViewerTarget"
                             @click="closeMenu">
@@ -153,17 +149,17 @@
                             </template>
                         </v-list-item>
                         <v-list-item
-                            v-if="allowEditing && currentTab === 'dpp'"
+                            v-if="currentTab === 'dpp'"
                             class="mt-3 py-2"
                             :active="false"
                             nav
-                            :border="isActiveRoutePath('/dpp/detail/edit')"
-                            subtitle="Edit Digital Product Passport"
-                            title="DPP Editor"
-                            :to="dppEditorTarget"
+                            :border="isActiveRoutePath('/dpp/registry')"
+                            subtitle="Manage all registered Digital Product Passports in the Registry"
+                            title="DPP Registry"
+                            :to="dppRegistryTarget"
                             @click="closeMenu">
                             <template #prepend>
-                                <v-avatar color="surface-light" icon="mdi-pencil" rounded>
+                                <v-avatar color="surface-light" icon="mdi-database" rounded>
                                     <v-icon color="medium-emphasis" />
                                 </v-avatar>
                             </template>
@@ -277,10 +273,10 @@
         const aas = dppAasQuery.value;
         return aas ? { path: '/dpp/detail', query: { aas } } : { path: '/dpp/detail' };
     });
-    const dppEditorTarget = computed(() => {
-        if (isActiveRoutePath('/dpp/detail/edit')) return '';
+    const dppRegistryTarget = computed(() => {
+        if (isActiveRoutePath('/dpp/registry')) return '';
         const aas = dppAasQuery.value;
-        return aas ? { path: '/dpp/detail/edit', query: { aas } } : { path: '/dpp/list' };
+        return aas ? { path: '/dpp/registry', query: { aas } } : { path: '/dpp/registry' };
     });
     const filteredAndOrderedModuleRoutes = computed(() => {
         const filteredModuleRoutes = moduleRoutes.value.filter((moduleRoute: RouteRecordRaw) => {
