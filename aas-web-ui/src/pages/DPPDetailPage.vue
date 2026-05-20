@@ -57,7 +57,7 @@
                         <div class="text-overline text-primary mb-1">Digital Product Passport</div>
                         <h1 class="dpp-title text-h4 font-weight-bold mb-2">{{ nameFromState }}</h1>
                         <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">
-                            DPP-ID: {{ decodeBase64(dpp.dppId) }}
+                            DPP-ID: {{ dpp.dppId }}
                         </p>
                     </div>
                     <div class="d-flex align-start ga-4">
@@ -180,11 +180,11 @@
                                         size="x-small"
                                         variant="text"
                                         :color="copiedKey === 'dppId' ? 'success' : 'grey'"
-                                        @click="copyToClipboard(decodeBase64(dpp.dppId), 'dppId')" />
+                                        @click="copyToClipboard(dpp.dppId, 'dppId')" />
                                 </template>
                             </v-tooltip>
                         </div>
-                        <div class="meta-value text-break">{{ decodeBase64(dpp.dppId) }}</div>
+                        <div class="meta-value text-break">{{ dpp.dppId }}</div>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
                         <div class="meta-label">Version</div>
@@ -199,7 +199,7 @@
                 <template v-if="namePlateBanner">
                     <v-divider class="border-primary mt-6 mb-4" thickness="1" opacity="0.4" />
                     <div class="np-banner-label mb-3">
-                        <v-icon size="14" color="primary" class="mr-1">mdi-id-card-outline</v-icon>
+                        <v-icon size="14" icon="mdi-card-text-outline" color="primary" class="mr-1" />
                         NamePlate
                     </div>
                     <v-row dense>
@@ -270,9 +270,7 @@
                                 :class="{ 'sidebar-submodel-chip--active': activeSubmodel === submodel.name }"
                                 @click="selectSubmodel(submodel.name)"
                             >
-                                <v-icon size="14" :color="activeSubmodel === submodel.name ? 'primary' : 'grey'" class="mr-2">
-                                    {{ submodelIcon(submodel.name, activeSubmodel === submodel.name) }}
-                                </v-icon>
+                                <v-icon size="14" :icon="submodelIcon(submodel.name, activeSubmodel === submodel.name)" :color="activeSubmodel === submodel.name ? 'primary' : 'grey'" class="mr-2" />
                                 <span>{{ submodel.name }}</span>
                             </div>
                         </div>
@@ -334,27 +332,6 @@
                     </v-alert>
                 </v-col>
 
-                <!-- Sidebar -->
-                <v-col cols="12" md="4">
-                    <v-card class="sidebar-card pa-6" elevation="2">
-                        <div class="d-flex flex-column ga-2">
-                            <div
-                                v-for="submodel in dpp.submodels.filter((s) => s.name !== 'NamePlate')"
-                                :key="submodel.name"
-                                class="sidebar-submodel-chip"
-                                :class="{ 'sidebar-submodel-chip--active': activeSubmodel === submodel.name }"
-                                @click="selectSubmodel(submodel.name)">
-                                <v-icon
-                                    size="14"
-                                    :color="activeSubmodel === submodel.name ? 'primary' : 'grey'"
-                                    class="mr-2">
-                                    {{ submodelIcon(submodel.name, activeSubmodel === submodel.name) }}
-                                </v-icon>
-                                <span>{{ submodel.name }}</span>
-                            </div>
-                        </div>
-                    </v-card>
-                </v-col>
             </v-row>
         </template>
     </v-container>
@@ -489,7 +466,7 @@
     // ─── Submodel icons ───────────────────────────────────────────────────────────
     function submodelIcon(name: string, open: boolean): string {
         const icons: Record<string, string> = {
-            NamePlate: open ? 'mdi-id-card' : 'mdi-id-card-outline',
+            NamePlate: open ? 'mdi-card-text' : 'mdi-card-text-outline',
             MaterialComposition: open ? 'mdi-atom' : 'mdi-atom-variant',
             HandoverDocumentation: open ? 'mdi-file-document' : 'mdi-file-document-outline',
             CarbonFootPrint: open ? 'mdi-leaf' : 'mdi-leaf-circle-outline',
@@ -579,6 +556,10 @@
         return v;
     }
 
+    function extractMlpText(arr: Array<{ language?: string; text?: string }>): string {
+        return arr.find((x) => x.language === 'en')?.text ?? arr[0]?.text ?? '-';
+    }
+
     function normalizeEntries(raw: unknown, fallbackId?: string): SubmodelEntry[] {
         const res: SubmodelEntry[] = [];
         const r = tryParseJsonIfString(raw);
@@ -601,7 +582,9 @@
                         contentType: obj.contentType as string | undefined,
                         ...obj,
                     };
-                    if (entry.value && typeof entry.value === 'object')
+                    if (entry.modelType === 'MultiLanguageProperty' && Array.isArray(entry.value))
+                        entry.value = extractMlpText(entry.value as Array<{ language?: string; text?: string }>);
+                    else if (entry.value && typeof entry.value === 'object')
                         entry.value = normalizeEntries(entry.value, entry.idShort);
                     res.push(entry);
                     continue;
@@ -626,7 +609,9 @@
                     contentType: obj.contentType as string | undefined,
                     ...obj,
                 };
-                if (entry.value && typeof entry.value === 'object')
+                if (entry.modelType === 'MultiLanguageProperty' && Array.isArray(entry.value))
+                    entry.value = extractMlpText(entry.value as Array<{ language?: string; text?: string }>);
+                else if (entry.value && typeof entry.value === 'object')
                     entry.value = normalizeEntries(entry.value, entry.idShort);
                 return [entry];
             }
@@ -982,10 +967,22 @@
                 return links;
             }
 
+            function walkFilesDeep(entries: SubmodelEntry[]): string[] {
+                    const links: string[] = [];
+                    for (const x of entries) {
+                        if (x.modelType === 'File' && x.value && typeof x.value === 'string')
+                            links.push(x.value);
+                        if (Array.isArray(x.value)) links.push(...walkFilesDeep(x.value as SubmodelEntry[]));
+                    }
+                    return links;
+                }
+
             return () => {
                 const e = props.entries;
+                // Try wrapper first, otherwise use entries directly
                 const docRoot = findByIdShort(e, 'HandoverDocumentation');
-                const docChildren = childEntries(docRoot);
+                const workEntries = docRoot ? childEntries(docRoot) : e;
+                const hasCategories = docCategories.some((cat) => findByIdShort(workEntries, cat.key));
 
                 const metaRows = [
                     { label: 'Manufacturer', icon: 'mdi-factory', val: flatVal(e, 'Manufacturer') },
@@ -994,6 +991,88 @@
                     { label: 'Order', icon: 'mdi-receipt', val: flatVal(e, 'OrderReference') },
                     { label: 'Product', icon: 'mdi-information', val: flatVal(e, 'ProductInformation') },
                 ];
+
+                // Build document card list — standard categories OR generic VDI2770 fallback
+                const docCards = hasCategories
+                    ? docCategories.map((cat) => {
+                          const links = getFileLinks(workEntries, cat.key);
+                          return h('div', { class: 'hd-doc-card', style: `--cat-color:${cat.color}` }, [
+                              h('div', { class: 'hd-doc-card-head' }, [
+                                  h('i', { class: `mdi ${cat.icon} hd-doc-card-icon` }),
+                                  h('span', { class: 'hd-doc-card-label' }, cat.label),
+                              ]),
+                              links.length > 0
+                                  ? h(
+                                        'div',
+                                        { class: 'hd-doc-links' },
+                                        links.map((link) =>
+                                            h(
+                                                'a',
+                                                {
+                                                    href: link,
+                                                    target: link.startsWith('http') ? '_blank' : undefined,
+                                                    rel: 'noopener noreferrer',
+                                                    class: 'hd-doc-link',
+                                                },
+                                                [
+                                                    h('i', { class: 'mdi mdi-file-pdf-box hd-doc-link-icon' }),
+                                                    link.split('/').pop() || link,
+                                                ]
+                                            )
+                                        )
+                                    )
+                                  : h('div', { class: 'hd-doc-empty' }, 'No document available'),
+                          ]);
+                      })
+                    : workEntries.map((doc) => {
+                          // VDI2770 / generic format: each top-level entry is one document
+                          const classChildren = childEntries(findByIdShort(childEntries(doc), 'DocumentClassification'));
+                          const className = flatVal(classChildren, 'ClassName');
+                          const label =
+                              className !== '-'
+                                  ? className
+                                  : (doc.idShort ?? 'Document').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
+                          const versionChildren = childEntries(findByIdShort(childEntries(doc), 'DocumentVersion'));
+                          const orgName = flatVal(versionChildren, 'OrganizationName');
+                          const language = flatVal(versionChildren, 'Language');
+                          const links = walkFilesDeep(childEntries(doc));
+                          return h('div', { class: 'hd-doc-card', style: '--cat-color:#78909C' }, [
+                              h('div', { class: 'hd-doc-card-head' }, [
+                                  h('i', { class: 'mdi mdi-file-document hd-doc-card-icon' }),
+                                  h('span', { class: 'hd-doc-card-label' }, label),
+                              ]),
+                              orgName !== '-'
+                                  ? h('div', { class: 'hd-doc-meta-row' }, [
+                                        h('span', { class: 'hd-doc-meta-key' }, 'Publisher: '),
+                                        h('span', {}, orgName),
+                                        language !== '-'
+                                            ? h('span', { class: 'hd-doc-meta-lang' }, ` · ${language.toUpperCase()}`)
+                                            : null,
+                                    ])
+                                  : null,
+                              links.length > 0
+                                  ? h(
+                                        'div',
+                                        { class: 'hd-doc-links' },
+                                        links.map((link) =>
+                                            h(
+                                                'a',
+                                                {
+                                                    href: link,
+                                                    target: link.startsWith('http') ? '_blank' : undefined,
+                                                    rel: 'noopener noreferrer',
+                                                    class: 'hd-doc-link',
+                                                },
+                                                [
+                                                    h('i', { class: 'mdi mdi-file-pdf-box hd-doc-link-icon' }),
+                                                    link.split('/').pop() || link,
+                                                ]
+                                            )
+                                        )
+                                    )
+                                  : h('div', { class: 'hd-doc-empty' }, 'No document available'),
+                          ]);
+                      });
 
                 return h('div', { class: 'hd-root' }, [
                     // Meta info bar
@@ -1018,40 +1097,7 @@
                         h('i', { class: 'mdi mdi-folder-open hd-docs-title-icon' }),
                         'Documents',
                     ]),
-                    h(
-                        'div',
-                        { class: 'hd-docs-grid' },
-                        docCategories.map((cat) => {
-                            const links = getFileLinks(docChildren, cat.key);
-                            return h('div', { class: 'hd-doc-card', style: `--cat-color:${cat.color}` }, [
-                                h('div', { class: 'hd-doc-card-head' }, [
-                                    h('i', { class: `mdi ${cat.icon} hd-doc-card-icon` }),
-                                    h('span', { class: 'hd-doc-card-label' }, cat.label),
-                                ]),
-                                links.length > 0
-                                    ? h(
-                                          'div',
-                                          { class: 'hd-doc-links' },
-                                          links.map((link) =>
-                                              h(
-                                                  'a',
-                                                  {
-                                                      href: link,
-                                                      target: link.startsWith('http') ? '_blank' : undefined,
-                                                      rel: 'noopener noreferrer',
-                                                      class: 'hd-doc-link',
-                                                  },
-                                                  [
-                                                      h('i', { class: 'mdi mdi-file-pdf-box hd-doc-link-icon' }),
-                                                      link.split('/').pop() || link,
-                                                  ]
-                                              )
-                                          )
-                                      )
-                                    : h('div', { class: 'hd-doc-empty' }, 'No document available'),
-                            ]);
-                        })
-                    ),
+                    h('div', { class: 'hd-docs-grid' }, docCards),
                 ]);
             };
         },
@@ -1384,7 +1430,15 @@
                                 icon: 'mdi-cog-outline',
                                 color: '#78909C',
                             };
-                            const rows = childEntries(section).filter((r) => r.modelType === 'Property');
+                            const subRows = childEntries(section).filter(
+                                (r) => r.modelType === 'Property' || r.modelType === 'MultiLanguageProperty'
+                            );
+                            // Flat property: the section itself carries the value (no sub-entries)
+                            const isLeaf =
+                                subRows.length === 0 &&
+                                section.value !== undefined &&
+                                section.value !== null &&
+                                typeof section.value !== 'object';
                             return h('div', { class: 'td-section', style: `--sec-color:${meta.color}` }, [
                                 h('div', { class: 'td-sec-header' }, [
                                     h('i', { class: `mdi ${meta.icon} td-sec-icon` }),
@@ -1393,12 +1447,18 @@
                                 h(
                                     'div',
                                     { class: 'td-sec-grid' },
-                                    rows.map((r) =>
-                                        h('div', { class: 'td-sec-item' }, [
-                                            h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
-                                            h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
-                                        ])
-                                    )
+                                    isLeaf
+                                        ? [
+                                              h('div', { class: 'td-sec-item' }, [
+                                                  h('div', { class: 'td-sec-val' }, String(section.value)),
+                                              ]),
+                                          ]
+                                        : subRows.map((r) =>
+                                              h('div', { class: 'td-sec-item' }, [
+                                                  h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
+                                                  h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
+                                              ])
+                                          )
                                 ),
                             ]);
                         })
