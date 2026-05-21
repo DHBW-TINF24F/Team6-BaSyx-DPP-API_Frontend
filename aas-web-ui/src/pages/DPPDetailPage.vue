@@ -513,13 +513,13 @@ import { useAASStore } from "@/store/AASDataStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SubmodelEntry {
+  [key: string]: unknown;
   idShort?: string;
   value?: unknown;
   modelType?: string;
   valueType?: string;
   contentType?: string;
   children?: SubmodelEntry[];
-  [key: string]: unknown;
 }
 
 interface Dpp {

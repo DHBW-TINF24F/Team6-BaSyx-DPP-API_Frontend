@@ -5,12 +5,12 @@
  *
  * Dieses Script erstellt die notwendigen Test-Daten im echten DPP-Backend.
  * Verwendung:
- *   node scripts/setupTestData.mjs [BACKEND_URL]
+ * node scripts/setupTestData.mjs [BACKEND_URL]
  *
  * Beispiele:
- *   node scripts/setupTestData.mjs
- *   node scripts/setupTestData.mjs http://localhost:8080
- *   node scripts/setupTestData.mjs http://backend.example.com:8080
+ * node scripts/setupTestData.mjs
+ * node scripts/setupTestData.mjs http://localhost:8080
+ * node scripts/setupTestData.mjs http://backend.example.com:8080
  */
 
 // Configuration
