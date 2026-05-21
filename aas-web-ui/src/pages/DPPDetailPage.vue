@@ -970,8 +970,10 @@
             function walkFilesDeep(entries: SubmodelEntry[]): string[] {
                     const links: string[] = [];
                     for (const x of entries) {
-                        if (x.modelType === 'File' && x.value && typeof x.value === 'string')
-                            links.push(x.value);
+                        if (x.modelType === 'File' && x.value && typeof x.value === 'string') {
+                            const ct = String(x.contentType ?? '').toLowerCase();
+                            if (!ct.startsWith('image/')) links.push(x.value);
+                        }
                         if (Array.isArray(x.value)) links.push(...walkFilesDeep(x.value as SubmodelEntry[]));
                     }
                     return links;
@@ -1026,7 +1028,9 @@
                       })
                     : workEntries.map((doc) => {
                           // VDI2770 / generic format: each top-level entry is one document
-                          const classChildren = childEntries(findByIdShort(childEntries(doc), 'DocumentClassification'));
+                          const docChildren = childEntries(doc);
+                          const classEntry = docChildren.find((c) => c.idShort?.startsWith('DocumentClassification'));
+                          const classChildren = childEntries(classEntry);
                           const className = flatVal(classChildren, 'ClassName');
                           const label =
                               className !== '-'
@@ -1127,13 +1131,34 @@
 
             return () => {
                 const e = props.entries;
+                // Fall back to direct entries when the battery-specific 'ProductCarbonFootprint' wrapper isn't present
                 const pfRoot = findByIdShort(e, 'ProductCarbonFootprint');
-                const pf = childEntries(pfRoot);
+                const pf = pfRoot ? childEntries(pfRoot) : e;
 
-                const totalRaw = parseFloat(flatVal(pf, 'TotalCO2Equivalent')) || 0;
-                const unit = flatVal(pf, 'DeclaringUnit');
-                const phase = flatVal(pf, 'CarbonFootprintLifeCycleStages');
-                const ref = flatVal(pf, 'CarbonFootprintTotalReference');
+                // Try several common field-name conventions across battery and industrial-product standards
+                const totalRaw =
+                    parseFloat(flatVal(pf, 'TotalCO2Equivalent')) ||
+                    parseFloat(flatVal(pf, 'CO2Equivalent')) ||
+                    parseFloat(flatVal(pf, 'PCFCO2eq')) ||
+                    parseFloat(flatVal(pf, 'GWP')) ||
+                    0;
+                const unit =
+                    [
+                        flatVal(pf, 'DeclaringUnit'),
+                        flatVal(pf, 'Unit'),
+                        flatVal(pf, 'PCFUnit'),
+                    ].find((v) => v !== '-') ?? '-';
+                const phase =
+                    [
+                        flatVal(pf, 'CarbonFootprintLifeCycleStages'),
+                        flatVal(pf, 'LifeCycleStage'),
+                        flatVal(pf, 'PCFLifeCyclePhase'),
+                    ].find((v) => v !== '-') ?? '-';
+                const ref =
+                    [
+                        flatVal(pf, 'CarbonFootprintTotalReference'),
+                        flatVal(pf, 'PCFReferenceDocument'),
+                    ].find((v) => v !== '-') ?? '-';
 
                 const stages = stageConfig.map((s) => ({
                     ...s,
@@ -1384,6 +1409,7 @@
                 const e = props.entries;
                 const genInfo = findByIdShort(e, 'GeneralInformation');
                 const techProp = findByIdShort(e, 'TechnicalProperties');
+                const prodClass = findByIdShort(e, 'ProductClassifications');
 
                 const genChildren = childEntries(genInfo);
                 const techChildren = childEntries(techProp);
@@ -1398,6 +1424,32 @@
                     { label: 'Battery Class', val: flatVal(genChildren, 'BatteryCategory') },
                     { label: 'Mass (g)', val: flatVal(genChildren, 'BatteryMass') },
                 ];
+
+                // When TechnicalProperties holds flat Property/MultiLanguageProperty entries (e.g. connectors),
+                // render them as a single grouped list instead of one card per property.
+                const isFlat =
+                    techChildren.some((c) => c.modelType === 'Property' || c.modelType === 'MultiLanguageProperty') &&
+                    !techChildren.some(
+                        (c) => c.modelType === 'SubmodelElementCollection' || c.modelType === 'SubmodelElementList'
+                    );
+
+                // Build classification rows from ProductClassifications
+                const classRows: Array<{ label: string; val: string }> = [];
+                for (const item of childEntries(prodClass)) {
+                    const ic = childEntries(item);
+                    if (ic.length > 0) {
+                        const system = flatVal(ic, 'ProductClassificationSystem');
+                        const version = flatVal(ic, 'ClassificationSystemVersion');
+                        const classId = flatVal(ic, 'ProductClassId');
+                        if (system !== '-') classRows.push({ label: 'Classification System', val: system });
+                        if (version !== '-') classRows.push({ label: 'Version', val: version });
+                        if (classId !== '-') classRows.push({ label: 'Class ID', val: classId });
+                    }
+                }
+
+                const flatPropRows = techChildren.filter(
+                    (r) => r.modelType === 'Property' || r.modelType === 'MultiLanguageProperty'
+                );
 
                 return h('div', { class: 'td-root' }, [
                     // General info card
@@ -1420,49 +1472,85 @@
                         ),
                     ]),
 
-                    // Technical property sections
-                    h(
-                        'div',
-                        { class: 'td-sections' },
-                        techChildren.map((section) => {
-                            const meta = sectionMeta[section.idShort ?? ''] ?? {
-                                label: formatLabel(section.idShort ?? 'Properties'),
-                                icon: 'mdi-cog-outline',
-                                color: '#78909C',
-                            };
-                            const subRows = childEntries(section).filter(
-                                (r) => r.modelType === 'Property' || r.modelType === 'MultiLanguageProperty'
-                            );
-                            // Flat property: the section itself carries the value (no sub-entries)
-                            const isLeaf =
-                                subRows.length === 0 &&
-                                section.value !== undefined &&
-                                section.value !== null &&
-                                typeof section.value !== 'object';
-                            return h('div', { class: 'td-section', style: `--sec-color:${meta.color}` }, [
-                                h('div', { class: 'td-sec-header' }, [
-                                    h('i', { class: `mdi ${meta.icon} td-sec-icon` }),
-                                    h('span', {}, meta.label),
-                                ]),
-                                h(
-                                    'div',
-                                    { class: 'td-sec-grid' },
-                                    isLeaf
-                                        ? [
-                                              h('div', { class: 'td-sec-item' }, [
-                                                  h('div', { class: 'td-sec-val' }, String(section.value)),
-                                              ]),
-                                          ]
-                                        : subRows.map((r) =>
-                                              h('div', { class: 'td-sec-item' }, [
-                                                  h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
-                                                  h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
-                                              ])
-                                          )
-                                ),
-                            ]);
-                        })
-                    ),
+                    // Product Classifications (if present)
+                    classRows.length > 0
+                        ? h('div', { class: 'td-section', style: '--sec-color:#78909C' }, [
+                              h('div', { class: 'td-sec-header' }, [
+                                  h('i', { class: 'mdi mdi-tag-multiple td-sec-icon' }),
+                                  h('span', {}, 'Product Classifications'),
+                              ]),
+                              h(
+                                  'div',
+                                  { class: 'td-sec-grid' },
+                                  classRows.map((r) =>
+                                      h('div', { class: 'td-sec-item' }, [
+                                          h('div', { class: 'td-sec-label' }, r.label),
+                                          h('div', { class: 'td-sec-val' }, r.val),
+                                      ])
+                                  )
+                              ),
+                          ])
+                        : null,
+
+                    // Technical Properties: flat list for connector-style data, section cards for battery-style
+                    isFlat
+                        ? h('div', { class: 'td-section', style: '--sec-color:#42A5F5' }, [
+                              h('div', { class: 'td-sec-header' }, [
+                                  h('i', { class: 'mdi mdi-cog-outline td-sec-icon' }),
+                                  h('span', {}, 'Technical Properties'),
+                              ]),
+                              h(
+                                  'div',
+                                  { class: 'td-sec-grid' },
+                                  flatPropRows.map((r) =>
+                                      h('div', { class: 'td-sec-item' }, [
+                                          h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
+                                          h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
+                                      ])
+                                  )
+                              ),
+                          ])
+                        : h(
+                              'div',
+                              { class: 'td-sections' },
+                              techChildren.map((section) => {
+                                  const meta = sectionMeta[section.idShort ?? ''] ?? {
+                                      label: formatLabel(section.idShort ?? 'Properties'),
+                                      icon: 'mdi-cog-outline',
+                                      color: '#78909C',
+                                  };
+                                  const subRows = childEntries(section).filter(
+                                      (r) => r.modelType === 'Property' || r.modelType === 'MultiLanguageProperty'
+                                  );
+                                  const isLeaf =
+                                      subRows.length === 0 &&
+                                      section.value !== undefined &&
+                                      section.value !== null &&
+                                      typeof section.value !== 'object';
+                                  return h('div', { class: 'td-section', style: `--sec-color:${meta.color}` }, [
+                                      h('div', { class: 'td-sec-header' }, [
+                                          h('i', { class: `mdi ${meta.icon} td-sec-icon` }),
+                                          h('span', {}, meta.label),
+                                      ]),
+                                      h(
+                                          'div',
+                                          { class: 'td-sec-grid' },
+                                          isLeaf
+                                              ? [
+                                                    h('div', { class: 'td-sec-item' }, [
+                                                        h('div', { class: 'td-sec-val' }, String(section.value)),
+                                                    ]),
+                                                ]
+                                              : subRows.map((r) =>
+                                                    h('div', { class: 'td-sec-item' }, [
+                                                        h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
+                                                        h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
+                                                    ])
+                                                )
+                                      ),
+                                  ]);
+                              })
+                          ),
                 ]);
             };
         },
@@ -2577,6 +2665,21 @@
         font-size: 0.8rem;
         color: rgba(var(--v-theme-titleText), 0.4);
         font-style: italic;
+    }
+    .hd-doc-meta-row {
+        padding: 5px 14px 6px;
+        font-size: 0.78rem;
+        color: rgba(var(--v-theme-titleText), 0.75);
+        border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+    }
+    .hd-doc-meta-key {
+        font-weight: 600;
+        color: rgba(var(--v-theme-titleText), 0.45);
+    }
+    .hd-doc-meta-lang {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgb(var(--v-theme-primary));
     }
 
     /* ══════════════════════════════════════════════════════════════════════════
