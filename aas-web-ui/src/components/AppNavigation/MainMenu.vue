@@ -10,11 +10,15 @@
       <v-container>
         <v-sheet
           class="overflow-hidden mx-auto mb-4"
-          :elevation="smViewerEditor || filteredAndOrderedModuleRoutes.length > 0 ? 2 : 0"
+          :elevation="
+            smViewerEditor || filteredAndOrderedModuleRoutes.length > 0 ? 2 : 0
+          "
           min-width="450"
           rounded="lg"
         >
-          <template v-if="smViewerEditor || filteredAndOrderedModuleRoutes.length > 0">
+          <template
+            v-if="smViewerEditor || filteredAndOrderedModuleRoutes.length > 0"
+          >
             <v-tabs v-model="currentTab" color="primary" grow>
               <v-tab text="AAS" value="aas" />
 
@@ -24,9 +28,12 @@
 
               <v-divider vertical />
 
+              <v-tab text="DPP" value="dpp" />
+
+              <v-divider vertical />
+
               <v-tab
                 v-if="filteredAndOrderedModuleRoutes.length > 0"
-
                 text="Modules"
                 value="modules"
               />
@@ -44,7 +51,11 @@
               nav
               subtitle="View Asset Administration Shells"
               title="AAS Viewer"
-              :to="isActiveRoutePath('/aasviewer') ? '' : { path: '/aasviewer', query: route.query }"
+              :to="
+                isActiveRoutePath('/aasviewer')
+                  ? ''
+                  : { path: '/aasviewer', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -62,7 +73,11 @@
               nav
               subtitle="Edit Asset Administration Shells"
               title="AAS Editor"
-              :to="isActiveRoutePath('/aaseditor') ? '' : { path: '/aaseditor', query: route.query }"
+              :to="
+                isActiveRoutePath('/aaseditor')
+                  ? ''
+                  : { path: '/aaseditor', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -80,7 +95,11 @@
               nav
               subtitle="View Submodel Visualizations of Asset Administration Shells"
               title="AAS SM Visualizations"
-              :to="isActiveRoutePath('/aassmviewer') ? '' : { path: '/aassmviewer', query: route.query }"
+              :to="
+                isActiveRoutePath('/aassmviewer')
+                  ? ''
+                  : { path: '/aassmviewer', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -98,7 +117,11 @@
               nav
               subtitle="View Submodels"
               title="SM Viewer"
-              :to="isActiveRoutePath('/smviewer') ? '' : { path: '/smviewer', query: route.query }"
+              :to="
+                isActiveRoutePath('/smviewer')
+                  ? ''
+                  : { path: '/smviewer', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -116,7 +139,11 @@
               nav
               subtitle="Edit Submodels"
               title="SM Editor"
-              :to="isActiveRoutePath('/smeditor') ? '' : { path: '/smeditor', query: route.query }"
+              :to="
+                isActiveRoutePath('/smeditor')
+                  ? ''
+                  : { path: '/smeditor', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -127,14 +154,22 @@
             </v-list-item>
 
             <v-list-item
-              v-if="selectedNode && Object.keys(selectedNode).length > 0 && currentTab === 'submodel'"
+              v-if="
+                selectedNode &&
+                Object.keys(selectedNode).length > 0 &&
+                currentTab === 'submodel'
+              "
               :active="false"
               :border="isActiveRoutePath('/visu')"
               class="mt-3 py-2"
               nav
               subtitle="Visualize Submodels/Submodel Elements"
               title="Visualization"
-              :to="isActiveRoutePath('/visu') ? '' : { path: '/visu', query: route.query }"
+              :to="
+                isActiveRoutePath('/visu')
+                  ? ''
+                  : { path: '/visu', query: route.query }
+              "
               @click="closeMenu"
             >
               <template #prepend>
@@ -145,53 +180,64 @@
             </v-list-item>
 
             <v-list-item
-                            v-if="currentTab === 'dpp'"
-                            class="py-2"
-                            :active="false"
-                            nav
-                            :border="isActiveRoutePath('/dpp/list')"
-                            subtitle="All Digital Product Passports"
-                            title="DPP List"
-                            :to="isActiveRoutePath('/dpp/list') ? '' : { path: '/dpp/list' }"
-                            @click="closeMenu">
-                            <template #prepend>
-                                <v-avatar color="surface-light" icon="mdi-format-list-bulleted" rounded>
-                                    <v-icon color="medium-emphasis" />
-                                </v-avatar>
-                            </template>
-                        </v-list-item>
-                        <v-list-item
-                            v-if="currentTab === 'dpp'"
-                            class="mt-3 py-2"
-                            :active="false"
-                            nav
-                            :border="isActiveRoutePath('/dpp/detail')"
-                            subtitle="View the selected AAS as Digital Product Passport (DPP) and its details"
-                            title="DPP Viewer"
-                            :to="dppViewerTarget"
-                            @click="closeMenu">
-                            <template #prepend>
-                                <v-avatar color="surface-light" icon="mdi-certificate-outline" rounded>
-                                    <v-icon color="medium-emphasis" />
-                                </v-avatar>
-                            </template>
-                        </v-list-item>
-                        <v-list-item
-                            v-if="currentTab === 'dpp'"
-                            class="mt-3 py-2"
-                            :active="false"
-                            nav
-                            :border="isActiveRoutePath('/dpp/registry')"
-                            subtitle="Manage all registered Digital Product Passports in the Registry"
-                            title="DPP Registry"
-                            :to="dppRegistryTarget"
-                            @click="closeMenu">
-                            <template #prepend>
-                                <v-avatar color="surface-light" icon="mdi-database" rounded>
-                                    <v-icon color="medium-emphasis" />
-                                </v-avatar>
-                            </template>
-                        </v-list-item>
+              v-if="currentTab === 'dpp'"
+              class="py-2"
+              :active="false"
+              nav
+              :border="isActiveRoutePath('/dpp/list')"
+              subtitle="All Digital Product Passports"
+              title="DPP List"
+              :to="isActiveRoutePath('/dpp/list') ? '' : { path: '/dpp/list' }"
+              @click="closeMenu"
+            >
+              <template #prepend>
+                <v-avatar
+                  color="surface-light"
+                  icon="mdi-format-list-bulleted"
+                  rounded
+                >
+                  <v-icon color="medium-emphasis" />
+                </v-avatar>
+              </template>
+            </v-list-item>
+            <v-list-item
+              v-if="currentTab === 'dpp'"
+              class="mt-3 py-2"
+              :active="false"
+              nav
+              :border="isActiveRoutePath('/dpp/detail')"
+              subtitle="View the selected AAS as Digital Product Passport (DPP) and its details"
+              title="DPP Viewer"
+              :to="dppViewerTarget"
+              @click="closeMenu"
+            >
+              <template #prepend>
+                <v-avatar
+                  color="surface-light"
+                  icon="mdi-certificate-outline"
+                  rounded
+                >
+                  <v-icon color="medium-emphasis" />
+                </v-avatar>
+              </template>
+            </v-list-item>
+            <v-list-item
+              v-if="currentTab === 'dpp'"
+              class="mt-3 py-2"
+              :active="false"
+              nav
+              :border="isActiveRoutePath('/dpp/registry')"
+              subtitle="Manage all registered Digital Product Passports in the Registry"
+              title="DPP Registry"
+              :to="dppRegistryTarget"
+              @click="closeMenu"
+            >
+              <template #prepend>
+                <v-avatar color="surface-light" icon="mdi-database" rounded>
+                  <v-icon color="medium-emphasis" />
+                </v-avatar>
+              </template>
+            </v-list-item>
 
             <v-list
               v-if="currentTab === 'modules'"
@@ -215,7 +261,9 @@
                     slim
                     :subtitle="item.path"
                     :title="
-                      item.meta?.title ? item.meta.title.toString() : item.meta?.name?.toString()
+                      item.meta?.title
+                        ? item.meta.title.toString()
+                        : item.meta?.name?.toString()
                     "
                     :to="
                       item?.meta?.preserveRouteQuery === true
@@ -233,7 +281,6 @@
 
       <template #actions>
         <v-btn
-
           color="primary"
           text="About"
           :to="isActiveRoutePath('/about') ? '' : '/about'"
@@ -252,114 +299,142 @@
 
         <v-spacer />
 
-        <v-img :height="42" :max-width="126" src="@/assets/PoweredByBaSyx.svg" />
+        <v-img
+          :height="42"
+          :max-width="126"
+          src="@/assets/PoweredByBaSyx.svg"
+        />
       </template>
     </v-card>
   </v-container>
 </template>
 
 <script lang="ts" setup>
-  import type { ComponentPublicInstance, Ref } from 'vue'
-  import type { RouteRecordRaw } from 'vue-router'
-  import { computed, onMounted, ref } from 'vue'
-  import { useRoute } from 'vue-router'
-  import { useModuleHandling } from '@/composables/ModuleHandling'
-  import { useAASStore } from '@/store/AASDataStore'
-  import { useEnvStore } from '@/store/EnvironmentStore'
+import type { ComponentPublicInstance, Ref } from "vue";
+import type { RouteRecordRaw } from "vue-router";
+import { computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useModuleHandling } from "@/composables/ModuleHandling";
+import { useAASStore } from "@/store/AASDataStore";
+import { useEnvStore } from "@/store/EnvironmentStore";
+import { useNavigationStore } from "@/store/NavigationStore";
 
-  // Extend the ComponentPublicInstance type to include scrollToIndex
-  interface VirtualScrollInstance extends ComponentPublicInstance {
-    scrollToIndex: (index: number) => void
+// Extend the ComponentPublicInstance type to include scrollToIndex
+interface VirtualScrollInstance extends ComponentPublicInstance {
+  scrollToIndex: (index: number) => void;
+}
+
+// Vue Router
+const route = useRoute();
+
+// Stores
+const aasStore = useAASStore();
+const envStore = useEnvStore();
+const navigationStore = useNavigationStore();
+
+// Composables
+const { determineFilteredAndOrderedModuleRoutes } = useModuleHandling();
+
+// Emit
+const emit = defineEmits<{
+  (e: "close-menu"): void;
+}>();
+
+// Data
+const virtualScrollRef: Ref<VirtualScrollInstance | null> = ref(null); // Reference to the Virtual Scroll Component
+const currentTab: Ref<string> = ref("aas"); // Current Tab Index
+
+// Computed Properties
+const currentRoutePath = computed(() => route.path); // get the current route path
+const allowEditing = computed(() => envStore.getAllowEditing); // Check if the current environment allows showing the AAS resp. SM Editor
+const smViewerEditor = computed(() => envStore.getSmViewerEditor); // Check the current environment allows showing the SM Viewer/Editor
+const selectedNode = computed(() => aasStore.getSelectedNode); // get selected AAS from Store
+
+const dppAasQuery = computed((): string => {
+  const fromRoute = route.query.aas as string | undefined;
+  if (fromRoute) return fromRoute;
+  const fromSaved = navigationStore.getUrlQuery.aas as string | undefined;
+  return fromSaved || "";
+});
+const dppViewerTarget = computed(() => {
+  if (
+    isActiveRoutePath("/dpp/detail") &&
+    !isActiveRoutePath("/dpp/detail/edit")
+  )
+    return "";
+  const aas = dppAasQuery.value;
+  return aas
+    ? { path: "/dpp/detail", query: { aas } }
+    : { path: "/dpp/detail" };
+});
+const dppRegistryTarget = computed(() => {
+  if (isActiveRoutePath("/dpp/registry")) return "";
+  const aas = dppAasQuery.value;
+  return aas
+    ? { path: "/dpp/registry", query: { aas } }
+    : { path: "/dpp/registry" };
+});
+
+const filteredAndOrderedModuleRoutes = computed(() =>
+  determineFilteredAndOrderedModuleRoutes(),
+);
+
+onMounted(async () => {
+  scrollToSelectedModule();
+  setTabByRoutePath();
+});
+
+function closeMenu(): void {
+  emit("close-menu");
+}
+
+function isActiveRoutePath(routePath: string): boolean {
+  return (
+    currentRoutePath.value === routePath ||
+    currentRoutePath.value.startsWith(`${routePath}/`)
+  );
+}
+
+// Function to scroll to the active module
+function scrollToSelectedModule(): void {
+  // Find the index of the selected item
+  const index = filteredAndOrderedModuleRoutes.value.findIndex(
+    (moduleRoute: RouteRecordRaw) => isActiveRoutePath(moduleRoute.path),
+  );
+
+  if (index !== -1) {
+    const intervalId = setInterval(() => {
+      if (
+        virtualScrollRef.value &&
+        virtualScrollRef.value?.$el.querySelector(
+          ".v-virtual-scroll__container",
+        ).children.length > 0
+      ) {
+        // Access the scrollable container
+        virtualScrollRef.value.scrollToIndex(index);
+        clearInterval(intervalId);
+      }
+    }, 50);
   }
+}
 
-  // Vue Router
-  const route = useRoute()
-
-  // Stores
-  const aasStore = useAASStore()
-  const envStore = useEnvStore()
-
-  // Composables
-  const { determineFilteredAndOrderedModuleRoutes } = useModuleHandling()
-
-  // Emit
-  const emit = defineEmits<{
-    (e: 'close-menu'): void
-  }>()
-
-  // Data
-  const virtualScrollRef: Ref<VirtualScrollInstance | null> = ref(null) // Reference to the Virtual Scroll Component
-  const currentTab: Ref<string> = ref('aas') // Current Tab Index
-
-  // Computed Properties
-  const currentRoutePath = computed(() => route.path) // get the current route path
-  const allowEditing = computed(() => envStore.getAllowEditing) // Check if the current environment allows showing the AAS resp. SM Editor
-  const smViewerEditor = computed(() => envStore.getSmViewerEditor) // Check the current environment allows showing the SM Viewer/Editor
-  const selectedNode = computed(() => aasStore.getSelectedNode) // get selected AAS from Store
-
-  const dppAasQuery = computed((): string => {
-        const fromRoute = route.query.aas as string | undefined;
-        if (fromRoute) return fromRoute;
-        const fromSaved = navigationStore.getUrlQuery.aas as string | undefined;
-        return fromSaved || '';
-    });
-    const dppViewerTarget = computed(() => {
-        if (isActiveRoutePath('/dpp/detail') && !isActiveRoutePath('/dpp/detail/edit')) return '';
-        const aas = dppAasQuery.value;
-        return aas ? { path: '/dpp/detail', query: { aas } } : { path: '/dpp/detail' };
-    });
-    const dppRegistryTarget = computed(() => {
-        if (isActiveRoutePath('/dpp/registry')) return '';
-        const aas = dppAasQuery.value;
-        return aas ? { path: '/dpp/registry', query: { aas } } : { path: '/dpp/registry' };
-    });
-
-  const filteredAndOrderedModuleRoutes = computed(() => determineFilteredAndOrderedModuleRoutes())
-
-  onMounted(async () => {
-    scrollToSelectedModule()
-    setTabByRoutePath()
-  })
-
-  function closeMenu (): void {
-    emit('close-menu')
+function setTabByRoutePath(): void {
+  if (
+    isActiveRoutePath("/aasviewer") ||
+    isActiveRoutePath("/aaseditor") ||
+    isActiveRoutePath("/aassmviewer")
+  ) {
+    currentTab.value = "aas";
+  } else if (
+    isActiveRoutePath("/smviewer") ||
+    isActiveRoutePath("/smeditor") ||
+    isActiveRoutePath("/visu")
+  ) {
+    currentTab.value = "submodel";
+  } else if (isActiveRoutePath("/dpp")) {
+    currentTab.value = "dpp";
+  } else {
+    currentTab.value = "modules";
   }
-
-  function isActiveRoutePath (routePath: string): boolean {
-    return currentRoutePath.value === routePath || currentRoutePath.value.startsWith(`${routePath}/`)
-  }
-
-  // Function to scroll to the active module
-  function scrollToSelectedModule (): void {
-    // Find the index of the selected item
-    const index = filteredAndOrderedModuleRoutes.value.findIndex((moduleRoute: RouteRecordRaw) =>
-      isActiveRoutePath(moduleRoute.path),
-    )
-
-    if (index !== -1) {
-      const intervalId = setInterval(() => {
-        if (
-          virtualScrollRef.value
-          && virtualScrollRef.value?.$el.querySelector('.v-virtual-scroll__container').children.length > 0
-        ) {
-          // Access the scrollable container
-          virtualScrollRef.value.scrollToIndex(index)
-          clearInterval(intervalId)
-        }
-      }, 50)
-    }
-  }
-
-  function setTabByRoutePath (): void {
-    if (isActiveRoutePath('/aasviewer') || isActiveRoutePath('/aaseditor') || isActiveRoutePath('/aassmviewer')) {
-      currentTab.value = 'aas'
-    } else if (isActiveRoutePath('/smviewer') || isActiveRoutePath('/smeditor') || isActiveRoutePath('/visu')) {
-      currentTab.value = 'submodel'
-        } else if (isActiveRoutePath('/dpp')) {
-            currentTab.value = 'dpp';
-    } else {
-      currentTab.value = 'modules'
-    }
-  }
-
+}
 </script>
