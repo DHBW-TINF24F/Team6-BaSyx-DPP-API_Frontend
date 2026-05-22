@@ -76,16 +76,24 @@
         <div
           class="d-flex flex-column flex-md-row align-md-start justify-space-between ga-4"
         >
-          <div>
-            <div class="text-overline text-primary mb-1">
-              Digital Product Passport
+          <div class="d-flex align-start ga-4">
+            <img
+              v-if="thumbnailUrl"
+              :src="thumbnailUrl"
+              alt="Asset thumbnail"
+              class="aas-thumbnail-img"
+            />
+            <div>
+              <div class="text-overline text-primary mb-1">
+                Digital Product Passport
+              </div>
+              <h1 class="dpp-title text-h4 font-weight-bold mb-2">
+                {{ nameFromState }}
+              </h1>
+              <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">
+                DPP-ID: {{ dpp.dppId }}
+              </p>
             </div>
-            <h1 class="dpp-title text-h4 font-weight-bold mb-2">
-              {{ nameFromState }}
-            </h1>
-            <p class="dpp-description text-body-1 text-grey-darken-1 mb-0">
-              DPP-ID: {{ dpp.dppId }}
-            </p>
           </div>
           <div class="d-flex align-start ga-4">
             <div v-if="qrCodeDataUrl" class="d-flex flex-column align-center">
@@ -510,6 +518,8 @@ import {
 } from "vue";
 import { useRouter } from "vue-router";
 import { useAASStore } from "@/store/AASDataStore";
+import { useAASRepositoryClient } from "@/composables/Client/AASRepositoryClient";
+import { useUrlUtils } from "@/composables/UrlUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SubmodelEntry {
@@ -585,6 +595,22 @@ const nameFromState = computed(() => {
     ""
   );
 });
+
+const { fetchAssetInformation, getAasEndpointById } = useAASRepositoryClient();
+const { getBlobUrl } = useUrlUtils();
+
+const thumbnailUrl = ref<string | null>(null);
+
+async function loadThumbnail(aas: any): Promise<void> {
+  thumbnailUrl.value = null;
+  if (!aas || Object.keys(aas).length === 0 || !aas.id) return;
+  const assetInfo = await fetchAssetInformation(getAasEndpointById(aas.id));
+  const thumb = assetInfo?.defaultThumbnail;
+  if (!thumb?.path || thumb.path.trim() === "") return;
+  thumbnailUrl.value = await getBlobUrl(thumb.path.trim(), !!thumb.isExternal);
+}
+
+watch(selectedAas, (aas) => loadThumbnail(aas), { immediate: true });
 
 // ─── Base64 helpers ───────────────────────────────────────────────────────────
 function encodeBase64(value: string): string {
@@ -2385,6 +2411,16 @@ watch(productId, async () => {
   border-radius: 6px;
   border: 1px solid rgba(var(--v-border-color), 0.2);
   cursor: default;
+}
+.aas-thumbnail-img {
+  height: 100%;
+  max-height: 135px;
+  width: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--v-border-color), 0.2);
+  object-fit: contain;
+  flex-shrink: 0;
+  align-self: stretch;
 }
 .np-banner-label {
   font-size: 0.7rem;
