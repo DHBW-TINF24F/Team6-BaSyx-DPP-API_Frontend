@@ -470,6 +470,7 @@
                 <CircularityView
                   v-else-if="activeSubmodel === 'Circularity'"
                   :entries="getSubmodelEntries(activeSubmodel)"
+                  :submodel-ref="dpp?.submodels.find(s => s.name === 'Circularity')?.reference ?? ''"
                 />
                 <TechnicalDataView
                   v-else-if="activeSubmodel === 'TechnicalData'"
@@ -519,6 +520,7 @@ import {
 import { useRouter } from "vue-router";
 import { useAASStore } from "@/store/AASDataStore";
 import { useAASRepositoryClient } from "@/composables/Client/AASRepositoryClient";
+import { useSMRepositoryClient } from "@/composables/Client/SMRepositoryClient";
 import { useUrlUtils } from "@/composables/UrlUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1623,8 +1625,92 @@ const CircularityView = defineComponent({
   name: "CircularityView",
   props: {
     entries: { type: Array as PropType<SubmodelEntry[]>, required: true },
+    submodelRef: { type: String, default: "" },
   },
   setup(props) {
+    const { getSmEndpointById } = useSMRepositoryClient();
+    const { getBlobUrl } = useUrlUtils();
+
+    interface DismFile {
+      href: string;
+      name: string;
+    }
+
+    // Resolved dismantling file links: populated async once entries/ref are known
+    const dismantlingLinks = ref<DismFile[]>([]);
+
+    async function resolveDismantlingLinks() {
+      const smRef = props.submodelRef?.trim();
+      const smEndpoint = smRef ? getSmEndpointById(smRef) : "";
+
+      const e = props.entries;
+      const cirRoot = findByIdShort(e, "Circularity");
+      const cir = childEntries(cirRoot);
+      const rootPrefix = cirRoot ? "Circularity" : "";
+
+      const dismStep = findByIdShort(
+        childEntries(findByIdShort(cir, "Dismantling")),
+        "DismantlingStep",
+      );
+
+      if (!dismStep) {
+        dismantlingLinks.value = [];
+        return;
+      }
+
+      const stepPrefix = rootPrefix
+        ? `${rootPrefix}.Dismantling.DismantlingStep`
+        : "Dismantling.DismantlingStep";
+
+      const found: Array<{ idShortPath: string; rawValue: string }> = [];
+
+      // parentModelType drives path notation:
+      // SubmodelElementList children use [i], all others use .idShort
+      function walkWithPath(
+        en: SubmodelEntry[],
+        prefix: string,
+        parentModelType?: string,
+      ) {
+        for (let i = 0; i < en.length; i++) {
+          const x = en[i];
+          const seg =
+            parentModelType === "SubmodelElementList"
+              ? `${prefix}[${i}]`
+              : prefix
+                ? `${prefix}.${x.idShort ?? ""}`
+                : (x.idShort ?? "");
+          if (x.modelType === "File" && x.value)
+            found.push({ idShortPath: seg, rawValue: String(x.value) });
+          if (Array.isArray(x.value))
+            walkWithPath(x.value as SubmodelEntry[], seg, x.modelType);
+        }
+      }
+
+      walkWithPath(childEntries(dismStep), stepPrefix, dismStep.modelType);
+
+      dismantlingLinks.value = await Promise.all(
+        found.map(async ({ idShortPath, rawValue }) => {
+          const name = rawValue.split("/").pop() || rawValue;
+          const isExternal =
+            rawValue.startsWith("http://") ||
+            rawValue.startsWith("https://");
+          if (isExternal) return { href: rawValue, name };
+          if (!smEndpoint) return { href: "", name };
+          const attachmentUrl = `${smEndpoint}/submodel-elements/${idShortPath}/attachment`;
+          const href = await getBlobUrl(attachmentUrl, false);
+          return { href, name };
+        }),
+      );
+    }
+
+    watch(
+      () => [props.entries, props.submodelRef] as const,
+      () => {
+        resolveDismantlingLinks();
+      },
+      { immediate: true },
+    );
+
     function arcPath(pct: number, r: number, cx: number, cy: number): string {
       const clamp = Math.min(Math.max(pct, 0), 99.99);
       const angle = (clamp / 100) * 2 * Math.PI - Math.PI / 2;
@@ -1653,22 +1739,6 @@ const CircularityView = defineComponent({
           "RecycledContentList",
         ),
       );
-
-      const dismantlingFiles: string[] = [];
-      const dismStep = findByIdShort(
-        childEntries(findByIdShort(cir, "Dismantling")),
-        "DismantlingStep",
-      );
-      if (dismStep) {
-        function walkFiles(en: SubmodelEntry[]) {
-          for (const x of en) {
-            if (x.modelType === "File" && x.value)
-              dismantlingFiles.push(String(x.value));
-            if (Array.isArray(x.value)) walkFiles(x.value as SubmodelEntry[]);
-          }
-        }
-        walkFiles(childEntries(dismStep));
-      }
 
       const gaugeR = 60;
       const gcx = 80;
@@ -1736,7 +1806,7 @@ const CircularityView = defineComponent({
               : null,
 
             // Dismantling docs
-            dismantlingFiles.length > 0
+            dismantlingLinks.value.length > 0
               ? h("div", { class: "circ-dism-section" }, [
                   h("div", { class: "circ-section-title" }, [
                     h("i", {
@@ -1747,18 +1817,23 @@ const CircularityView = defineComponent({
                   h(
                     "div",
                     { class: "circ-dism-links" },
-                    dismantlingFiles.map((f) =>
+                    dismantlingLinks.value.map((f) =>
                       h(
                         "a",
                         {
-                          href: f,
+                          href: f.href || undefined,
                           class: "circ-dism-link",
-                          target: f.startsWith("http") ? "_blank" : undefined,
+                          target: f.href?.startsWith("http")
+                            ? "_blank"
+                            : undefined,
+                          download: f.href?.startsWith("blob:")
+                            ? f.name
+                            : undefined,
                         },
                         [
                           h("i", { class: "mdi mdi-file-pdf-box" }),
                           " ",
-                          f.split("/").pop() || f,
+                          f.name,
                         ],
                       ),
                     ),
