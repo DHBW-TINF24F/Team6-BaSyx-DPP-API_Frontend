@@ -1329,140 +1329,105 @@ const HandoverDocumentationView = defineComponent({
         },
       ];
 
-      // Build document card list — standard categories OR generic VDI2770 fallback
-      const docCards = hasCategories
-        ? docCategories.map((cat) => {
-            const links = getFileLinks(workEntries, cat.key);
-            return h(
-              "div",
-              { class: "hd-doc-card", style: `--cat-color:${cat.color}` },
-              [
-                h("div", { class: "hd-doc-card-head" }, [
-                  h("i", { class: `mdi ${cat.icon} hd-doc-card-icon` }),
-                  h("span", { class: "hd-doc-card-label" }, cat.label),
-                ]),
-                links.length > 0
-                  ? h(
-                      "div",
-                      { class: "hd-doc-links" },
-                      links.map((link) =>
-                        h(
-                          "a",
-                          {
-                            href: link,
-                            target: link.startsWith("http")
-                              ? "_blank"
-                              : undefined,
-                            rel: "noopener noreferrer",
-                            class: "hd-doc-link",
-                          },
-                          [
-                            h("i", {
-                              class: "mdi mdi-file-pdf-box hd-doc-link-icon",
-                            }),
-                            link.split("/").pop() || link,
-                          ],
-                        ),
-                      ),
-                    )
-                  : h(
-                      "div",
-                      { class: "hd-doc-empty" },
-                      "No document available",
-                    ),
-              ],
-            );
-          })
-        : workEntries.map((doc) => {
-            // VDI2770 / generic format: each top-level entry is one document
-            const classChildren = childEntries(
-              findByIdShort(childEntries(doc), "DocumentClassification"),
-            );
-            const className = flatVal(classChildren, "ClassName");
-            const label =
-              className !== "-"
-                ? className
-                : (doc.idShort ?? "Document")
-                    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-                    .replace(/_/g, " ")
-                    .trim();
-            const versionChildren = childEntries(
-              findByIdShort(childEntries(doc), "DocumentVersion"),
-            );
-            const orgName = flatVal(versionChildren, "OrganizationName");
-            const language = flatVal(versionChildren, "Language");
-            const links = walkFilesDeep(childEntries(doc));
-            return h(
-              "div",
-              { class: "hd-doc-card", style: "--cat-color:#78909C" },
-              [
-                h("div", { class: "hd-doc-card-head" }, [
-                  h("i", { class: "mdi mdi-file-document hd-doc-card-icon" }),
-                  h("span", { class: "hd-doc-card-label" }, label),
-                ]),
-                orgName !== "-"
-                  ? h("div", { class: "hd-doc-meta-row" }, [
-                      h("span", { class: "hd-doc-meta-key" }, "Publisher: "),
-                      h("span", {}, orgName),
-                      language !== "-"
-                        ? h(
-                            "span",
-                            { class: "hd-doc-meta-lang" },
-                            ` · ${language.toUpperCase()}`,
-                          )
-                        : null,
-                    ])
-                  : null,
-                links.length > 0
-                  ? h(
-                      "div",
-                      { class: "hd-doc-links" },
-                      links.map((link) =>
-                        h(
-                          "a",
-                          {
-                            href: link,
-                            target: link.startsWith("http")
-                              ? "_blank"
-                              : undefined,
-                            rel: "noopener noreferrer",
-                            class: "hd-doc-link",
-                          },
-                          [
-                            h("i", {
-                              class: "mdi mdi-file-pdf-box hd-doc-link-icon",
-                            }),
-                            link.split("/").pop() || link,
-                          ],
-                        ),
-                      ),
-                    )
-                  : h(
-                      "div",
-                      { class: "hd-doc-empty" },
-                      "No document available",
-                    ),
-              ],
-            );
-          });
+                // Build document card list — standard categories OR generic VDI2770 fallback
+                const docCards = hasCategories
+                    ? docCategories.map((cat) => {
+                          const links = getFileLinks(workEntries, cat.key);
+                          return h('div', { class: 'hd-doc-card', style: `--cat-color:${cat.color}` }, [
+                              h('div', { class: 'hd-doc-card-head' }, [
+                                  h('i', { class: `mdi ${cat.icon} hd-doc-card-icon` }),
+                                  h('span', { class: 'hd-doc-card-label' }, cat.label),
+                              ]),
+                              links.length > 0
+                                  ? h(
+                                        'div',
+                                        { class: 'hd-doc-links' },
+                                        links.map((link) =>
+                                            h(
+                                                'a',
+                                                {
+                                                    href: link,
+                                                    target: link.startsWith('http') ? '_blank' : undefined,
+                                                    rel: 'noopener noreferrer',
+                                                    class: 'hd-doc-link',
+                                                },
+                                                [
+                                                    h('i', { class: 'mdi mdi-file-pdf-box hd-doc-link-icon' }),
+                                                    link.split('/').pop() || link,
+                                                ]
+                                            )
+                                        )
+                                    )
+                                  : h('div', { class: 'hd-doc-empty' }, 'No document available'),
+                          ]);
+                      })
+                    : workEntries.map((doc) => {
+                          // VDI2770 / generic format: each top-level entry is one document
+                          const classChildren = childEntries(findByIdShort(childEntries(doc), 'DocumentClassification'));
+                          const className = flatVal(classChildren, 'ClassName');
+                          const label =
+                              className !== '-'
+                                  ? className
+                                  : (doc.idShort ?? 'Document').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
+                          const versionChildren = childEntries(findByIdShort(childEntries(doc), 'DocumentVersion'));
+                          const orgName = flatVal(versionChildren, 'OrganizationName');
+                          const language = flatVal(versionChildren, 'Language');
+                          const links = walkFilesDeep(childEntries(doc));
+                          return h('div', { class: 'hd-doc-card', style: '--cat-color:#78909C' }, [
+                              h('div', { class: 'hd-doc-card-head' }, [
+                                  h('i', { class: 'mdi mdi-file-document hd-doc-card-icon' }),
+                                  h('span', { class: 'hd-doc-card-label' }, label),
+                              ]),
+                              orgName !== '-'
+                                  ? h('div', { class: 'hd-doc-meta-row' }, [
+                                        h('span', { class: 'hd-doc-meta-key' }, 'Publisher: '),
+                                        h('span', {}, orgName),
+                                        language !== '-'
+                                            ? h('span', { class: 'hd-doc-meta-lang' }, ` · ${language.toUpperCase()}`)
+                                            : null,
+                                    ])
+                                  : null,
+                              links.length > 0
+                                  ? h(
+                                        'div',
+                                        { class: 'hd-doc-links' },
+                                        links.map((link) =>
+                                            h(
+                                                'a',
+                                                {
+                                                    href: link,
+                                                    target: link.startsWith('http') ? '_blank' : undefined,
+                                                    rel: 'noopener noreferrer',
+                                                    class: 'hd-doc-link',
+                                                },
+                                                [
+                                                    h('i', { class: 'mdi mdi-file-pdf-box hd-doc-link-icon' }),
+                                                    link.split('/').pop() || link,
+                                                ]
+                                            )
+                                        )
+                                    )
+                                  : h('div', { class: 'hd-doc-empty' }, 'No document available'),
+                          ]);
+                      });
 
-      return h("div", { class: "hd-root" }, [
-        // Meta info bar
-        h(
-          "div",
-          { class: "hd-meta-grid" },
-          metaRows
-            .filter((r) => r.val !== "-")
-            .map((r) =>
-              h("div", { class: "hd-meta-item" }, [
-                h("i", { class: `mdi ${r.icon} hd-meta-icon` }),
-                h("div", {}, [
-                  h("div", { class: "hd-meta-label" }, r.label),
-                  h("div", { class: "hd-meta-val" }, r.val),
-                ]),
-              ]),
-            ),
-        ),
+                return h('div', { class: 'hd-root' }, [
+                    // Meta info bar
+                    h(
+                        'div',
+                        { class: 'hd-meta-grid' },
+                        metaRows
+                            .filter((r) => r.val !== '-')
+                            .map((r) =>
+                                h('div', { class: 'hd-meta-item' }, [
+                                    h('i', { class: `mdi ${r.icon} hd-meta-icon` }),
+                                    h('div', {}, [
+                                        h('div', { class: 'hd-meta-label' }, r.label),
+                                        h('div', { class: 'hd-meta-val' }, r.val),
+                                    ]),
+                                ])
+                            )
+                    ),
 
         // Document cards
         h("div", { class: "hd-docs-title" }, [
@@ -1509,15 +1474,15 @@ const CarbonFootPrintView = defineComponent({
       },
     ];
 
-    return () => {
-      const e = props.entries;
-      const pfRoot = findByIdShort(e, "ProductCarbonFootprint");
-      const pf = childEntries(pfRoot);
+            return () => {
+                const e = props.entries;
+                const pfRoot = findByIdShort(e, 'ProductCarbonFootprint');
+                const pf = childEntries(pfRoot);
 
-      const totalRaw = parseFloat(flatVal(pf, "TotalCO2Equivalent")) || 0;
-      const unit = flatVal(pf, "DeclaringUnit");
-      const phase = flatVal(pf, "CarbonFootprintLifeCycleStages");
-      const ref = flatVal(pf, "CarbonFootprintTotalReference");
+                const totalRaw = parseFloat(flatVal(pf, 'TotalCO2Equivalent')) || 0;
+                const unit = flatVal(pf, 'DeclaringUnit');
+                const phase = flatVal(pf, 'CarbonFootprintLifeCycleStages');
+                const ref = flatVal(pf, 'CarbonFootprintTotalReference');
 
       const stages = stageConfig.map((s) => ({
         ...s,
@@ -1818,39 +1783,24 @@ const TechnicalDataView = defineComponent({
         .trim();
     }
 
-    return () => {
-      const e = props.entries;
-      const genInfo = findByIdShort(e, "GeneralInformation");
-      const techProp = findByIdShort(e, "TechnicalProperties");
+            return () => {
+                const e = props.entries;
+                const genInfo = findByIdShort(e, 'GeneralInformation');
+                const techProp = findByIdShort(e, 'TechnicalProperties');
 
       const genChildren = childEntries(genInfo);
       const techChildren = childEntries(techProp);
 
-      // General info key fields
-      const genRows = [
-        {
-          label: "Manufacturer",
-          val: flatVal(genChildren, "ManufacturerName"),
-        },
-        {
-          label: "Product Name",
-          val: flatVal(genChildren, "ManufacturerProductDesignation"),
-        },
-        {
-          label: "Article Number",
-          val: flatVal(genChildren, "ManufacturerArticleNumber"),
-        },
-        {
-          label: "Order Code",
-          val: flatVal(genChildren, "ManufacturerOrderCode"),
-        },
-        { label: "Warranty", val: flatVal(genChildren, "WarrantyPeriod") },
-        {
-          label: "Battery Class",
-          val: flatVal(genChildren, "BatteryCategory"),
-        },
-        { label: "Mass (g)", val: flatVal(genChildren, "BatteryMass") },
-      ];
+                // General info key fields
+                const genRows = [
+                    { label: 'Manufacturer', val: flatVal(genChildren, 'ManufacturerName') },
+                    { label: 'Product Name', val: flatVal(genChildren, 'ManufacturerProductDesignation') },
+                    { label: 'Article Number', val: flatVal(genChildren, 'ManufacturerArticleNumber') },
+                    { label: 'Order Code', val: flatVal(genChildren, 'ManufacturerOrderCode') },
+                    { label: 'Warranty', val: flatVal(genChildren, 'WarrantyPeriod') },
+                    { label: 'Battery Class', val: flatVal(genChildren, 'BatteryCategory') },
+                    { label: 'Mass (g)', val: flatVal(genChildren, 'BatteryMass') },
+                ];
 
       return h("div", { class: "td-root" }, [
         // General info card
@@ -1873,71 +1823,53 @@ const TechnicalDataView = defineComponent({
           ),
         ]),
 
-        // Technical property sections
-        h(
-          "div",
-          { class: "td-sections" },
-          techChildren.map((section) => {
-            const meta = sectionMeta[section.idShort ?? ""] ?? {
-              label: formatLabel(section.idShort ?? "Properties"),
-              icon: "mdi-cog-outline",
-              color: "#78909C",
+                    // Technical property sections
+                    h(
+                        'div',
+                        { class: 'td-sections' },
+                        techChildren.map((section) => {
+                            const meta = sectionMeta[section.idShort ?? ''] ?? {
+                                label: formatLabel(section.idShort ?? 'Properties'),
+                                icon: 'mdi-cog-outline',
+                                color: '#78909C',
+                            };
+                            const subRows = childEntries(section).filter(
+                                (r) => r.modelType === 'Property' || r.modelType === 'MultiLanguageProperty'
+                            );
+                            // Flat property: the section itself carries the value (no sub-entries)
+                            const isLeaf =
+                                subRows.length === 0 &&
+                                section.value !== undefined &&
+                                section.value !== null &&
+                                typeof section.value !== 'object';
+                            return h('div', { class: 'td-section', style: `--sec-color:${meta.color}` }, [
+                                h('div', { class: 'td-sec-header' }, [
+                                    h('i', { class: `mdi ${meta.icon} td-sec-icon` }),
+                                    h('span', {}, meta.label),
+                                ]),
+                                h(
+                                    'div',
+                                    { class: 'td-sec-grid' },
+                                    isLeaf
+                                        ? [
+                                              h('div', { class: 'td-sec-item' }, [
+                                                  h('div', { class: 'td-sec-val' }, String(section.value)),
+                                              ]),
+                                          ]
+                                        : subRows.map((r) =>
+                                              h('div', { class: 'td-sec-item' }, [
+                                                  h('div', { class: 'td-sec-label' }, formatLabel(r.idShort ?? '')),
+                                                  h('div', { class: 'td-sec-val' }, String(r.value ?? '-')),
+                                              ])
+                                          )
+                                ),
+                            ]);
+                        })
+                    ),
+                ]);
             };
-            const subRows = childEntries(section).filter(
-              (r) =>
-                r.modelType === "Property" ||
-                r.modelType === "MultiLanguageProperty",
-            );
-            // Flat property: the section itself carries the value (no sub-entries)
-            const isLeaf =
-              subRows.length === 0 &&
-              section.value !== undefined &&
-              section.value !== null &&
-              typeof section.value !== "object";
-            return h(
-              "div",
-              { class: "td-section", style: `--sec-color:${meta.color}` },
-              [
-                h("div", { class: "td-sec-header" }, [
-                  h("i", { class: `mdi ${meta.icon} td-sec-icon` }),
-                  h("span", {}, meta.label),
-                ]),
-                h(
-                  "div",
-                  { class: "td-sec-grid" },
-                  isLeaf
-                    ? [
-                        h("div", { class: "td-sec-item" }, [
-                          h(
-                            "div",
-                            { class: "td-sec-val" },
-                            String(section.value),
-                          ),
-                        ]),
-                      ]
-                    : subRows.map((r) =>
-                        h("div", { class: "td-sec-item" }, [
-                          h(
-                            "div",
-                            { class: "td-sec-label" },
-                            formatLabel(r.idShort ?? ""),
-                          ),
-                          h(
-                            "div",
-                            { class: "td-sec-val" },
-                            String(r.value ?? "-"),
-                          ),
-                        ]),
-                      ),
-                ),
-              ],
-            );
-          }),
-        ),
-      ]);
-    };
-  },
-});
+        },
+    });
 
 // ─── 7. ProductCondition ─────────────────────────────────────────────────────
 const ProductConditionView = defineComponent({
@@ -3035,113 +2967,113 @@ watch(productId, async () => {
 /* ══════════════════════════════════════════════════════════════════════════
    3. HandoverDocumentation
 ══════════════════════════════════════════════════════════════════════════ */
-.hd-root {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.hd-meta-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.hd-meta-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(var(--v-border-color), 0.06);
-  border-radius: 8px;
-}
-.hd-meta-icon {
-  font-size: 16px;
-  color: rgb(var(--v-theme-primary));
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-.hd-meta-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: rgb(var(--v-theme-primary));
-  letter-spacing: 0.05em;
-}
-.hd-meta-val {
-  font-size: 0.83rem;
-  color: rgb(var(--v-theme-titleText));
-  margin-top: 1px;
-  word-break: break-word;
-}
-.hd-docs-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: rgb(var(--v-theme-primary));
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.hd-docs-title-icon {
-  font-size: 15px;
-}
-.hd-docs-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.hd-doc-card {
-  border-radius: 10px;
-  border: 1px solid rgba(var(--v-border-color), 0.15);
-  overflow: hidden;
-}
-.hd-doc-card-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: color-mix(in srgb, var(--cat-color) 12%, transparent);
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.1);
-}
-.hd-doc-card-icon {
-  font-size: 18px;
-  color: var(--cat-color);
-}
-.hd-doc-card-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgb(var(--v-theme-titleText));
-}
-.hd-doc-links {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
-}
-.hd-doc-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: rgb(var(--v-theme-primary));
-  text-decoration: none;
-  padding: 4px 0;
-  transition: opacity 0.15s;
-}
-.hd-doc-link:hover {
-  opacity: 0.7;
-  text-decoration: underline;
-}
-.hd-doc-link-icon {
-  font-size: 16px;
-  color: #d32f2f;
-}
-.hd-doc-empty {
-  padding: 10px 14px;
-  font-size: 0.8rem;
-  color: rgba(var(--v-theme-titleText), 0.4);
-  font-style: italic;
-}
+    .hd-root {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .hd-meta-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .hd-meta-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+        background: rgba(var(--v-border-color), 0.06);
+        border-radius: 8px;
+    }
+    .hd-meta-icon {
+        font-size: 16px;
+        color: rgb(var(--v-theme-primary));
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+    .hd-meta-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: rgb(var(--v-theme-primary));
+        letter-spacing: 0.05em;
+    }
+    .hd-meta-val {
+        font-size: 0.83rem;
+        color: rgb(var(--v-theme-titleText));
+        margin-top: 1px;
+        word-break: break-word;
+    }
+    .hd-docs-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: rgb(var(--v-theme-primary));
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .hd-docs-title-icon {
+        font-size: 15px;
+    }
+    .hd-docs-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .hd-doc-card {
+        border-radius: 10px;
+        border: 1px solid rgba(var(--v-border-color), 0.15);
+        overflow: hidden;
+    }
+    .hd-doc-card-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: color-mix(in srgb, var(--cat-color) 12%, transparent);
+        border-bottom: 1px solid rgba(var(--v-border-color), 0.1);
+    }
+    .hd-doc-card-icon {
+        font-size: 18px;
+        color: var(--cat-color);
+    }
+    .hd-doc-card-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: rgb(var(--v-theme-titleText));
+    }
+    .hd-doc-links {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 14px;
+    }
+    .hd-doc-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: rgb(var(--v-theme-primary));
+        text-decoration: none;
+        padding: 4px 0;
+        transition: opacity 0.15s;
+    }
+    .hd-doc-link:hover {
+        opacity: 0.7;
+        text-decoration: underline;
+    }
+    .hd-doc-link-icon {
+        font-size: 16px;
+        color: #d32f2f;
+    }
+    .hd-doc-empty {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+        color: rgba(var(--v-theme-titleText), 0.4);
+        font-style: italic;
+    }
 
 /* ══════════════════════════════════════════════════════════════════════════
    4. CarbonFootPrint
